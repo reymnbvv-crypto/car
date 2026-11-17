@@ -5235,6 +5235,156 @@ const root = new THREE.Group();parentScene.add(root);const scene = root;
 
 }
 
+
+const GEARBOX_PROFILE_STEPS=144;
+const GEARBOX_WALL=.116;
+const GEARBOX_FRONT=-2.115;
+const GEARBOX_JOINT=2.125;
+const GEARBOX_END=3.16;
+const GEARBOX_INSTALLED_END=2.87;
+const {lerp:gearboxLerp,smoothstep:gearboxEase}=THREE.MathUtils;
+
+// All profiles are expressed in transmission coordinates. The same section
+// goes through both halves of the joint so the service covers seat together.
+function createGearboxHousing(root,material,registerMesh,registerPart,envelopes,ports){
+ const profileAngles=Array.from({length:GEARBOX_PROFILE_STEPS+1},(_,i)=>{
+  const angle=i*Math.PI*2/GEARBOX_PROFILE_STEPS;
+  return [Math.cos(angle),Math.sin(angle)];
+ });
+ const main=new THREE.Group();
+ main.name='鑄鋁變速箱主殼';
+ root.add(main);
+ registerPart(main,new THREE.Vector3(0,2.25,-1.65));
+
+ const tail=new THREE.Group();
+ tail.name='倒檔端蓋與終傳接合座';
+ tail.position.x=2.68;
+ root.add(tail);
+ registerPart(tail,new THREE.Vector3(2.45,0,0));
+
+ function profile(x,dy,dz,padding=0){
+  const taper=gearboxEase(x,1.87,2.60);
+  const y=gearboxLerp(0,-.08,taper);
+  const z=gearboxLerp(.08,.18,taper);
+  const ry=gearboxLerp(1.12,.96,taper),rz=gearboxLerp(1.32,1.12,taper);
+  const oval=1/Math.hypot(dy/ry,dz/rz);
+  let extension=0;
+  for(const envelope of envelopes){
+   const distance=Math.max(envelope.from-x,x-envelope.to,0);
+   const influence=1-gearboxEase(distance,.032,.22);
+   if(influence===0)continue;
+   const a=(dy/envelope.ry)**2+(dz/envelope.rz)**2;
+   const oy=(envelope.y-y)/envelope.ry,oz=(envelope.z-z)/envelope.rz;
+   const b=oy*dy/envelope.ry+oz*dz/envelope.rz;
+   const discriminant=b*b-a*(oy*oy+oz*oz-1);
+   if(discriminant<0)continue;
+   const delta=(b+Math.sqrt(discriminant))/a-oval;
+   const blend=Math.max(0,.055-Math.abs(delta));
+   extension=Math.max(extension,influence*(Math.max(0,delta)+blend*blend/.22));
+  }
+  const r=oval+extension+padding;
+  return [y+dy*r,z+dz*r];
+ }
+
+ function loft(group,from,to,inner,outer,step=.040){
+  const positions=[],indices=[],count=Math.max(1,Math.ceil((to-from)/step));
+  const stride=profileAngles.length;
+  const sideSize=(count+1)*stride;
+  const offset=group.position.x;
+  for(const padding of [outer,inner]){
+   for(let j=0;j<=count;j++){
+    const x=gearboxLerp(from,to,j/count);
+    for(const [dy,dz] of profileAngles)positions.push(x-offset,...profile(x,dy,dz,padding));
+   }
+  }
+  for(let j=0;j<count;j++)for(let i=0;i<GEARBOX_PROFILE_STEPS;i++){
+   const a=j*stride+i,b=a+1,c=a+stride,d=c+1;
+   indices.push(a,b,c,b,d,c);
+   indices.push(a+sideSize,c+sideSize,b+sideSize,b+sideSize,c+sideSize,d+sideSize);
+  }
+  // Separate end-ring normals keep the machined flange edges crisp.
+  for(const [x,front] of [[from,true],[to,false]]){
+   const start=positions.length/3;
+   for(const padding of [outer,inner]){
+    for(const [dy,dz] of profileAngles)positions.push(x-offset,...profile(x,dy,dz,padding));
+   }
+   for(let i=0;i<GEARBOX_PROFILE_STEPS;i++){
+    const a=start+i,b=a+1,c=a+stride,d=c+1;
+    if(front)indices.push(a,c,b,b,c,d);
+    else indices.push(a,b,c,b,d,c);
+   }
+  }
+  const geometry=new THREE.BufferGeometry();
+  geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  // The first/last polar samples share a position but need the same normal.
+  const normals=geometry.attributes.normal;
+  const seam=new THREE.Vector3(),other=new THREE.Vector3();
+  for(let i=0;i<2*(count+1);i++){
+   const a=i*stride,b=a+stride-1;
+   seam.fromBufferAttribute(normals,a).add(other.fromBufferAttribute(normals,b)).normalize();
+   normals.setXYZ(a,seam.x,seam.y,seam.z);
+   normals.setXYZ(b,seam.x,seam.y,seam.z);
+  }
+  return geometry;
+ }
+
+ function wall(group,x,thickness,openings){
+  const contour=profileAngles.slice(0,-1).map(([dy,dz])=>{
+   const [y,z]=profile(x,dy,dz,GEARBOX_WALL);
+   return new THREE.Vector2(-z,y);
+  });
+  const shape=new THREE.Shape(contour);
+  for(const [y,z,radius] of openings){
+   shape.holes.push(new THREE.Path().absarc(-z,y,radius,0,Math.PI*2,true));
+  }
+  const geometry=new THREE.ExtrudeGeometry(shape,{depth:thickness,bevelEnabled:false,curveSegments:36});
+  geometry.rotateY(Math.PI/2);
+  geometry.translate(x-group.position.x,0,0);
+  return geometry;
+ }
+
+ function add(group,name,geometry){
+  const mesh=new THREE.Mesh(geometry,material);
+  mesh.name=name;
+  group.add(mesh);
+  registerMesh(mesh);
+  return mesh;
+ }
+
+ const mainShell=add(main,'主殼齒輪間隙與下弧面',loft(main,GEARBOX_FRONT,GEARBOX_JOINT,0,GEARBOX_WALL));
+ const frontWall=add(main,'離合器側軸承接合面',wall(main,GEARBOX_FRONT,.12,ports.front));
+ const tailShell=add(tail,'倒檔室端蓋下弧面',loft(tail,GEARBOX_JOINT,GEARBOX_END,0,GEARBOX_WALL));
+ const tailWall=add(tail,'倒檔室端蓋軸孔',wall(tail,GEARBOX_END,.12,ports.standalone));
+
+ // Each ring starts slightly inside its housing wall. Both faces follow
+ // precisely the same changing profile as the casting underneath.
+ const ribs=[];
+ for(const [a,b] of [[-1.49,-1.40],[-.58,-.49],[.34,.43],[1.29,1.38]]){
+  ribs.push(add(main,'沿殼體成形的補強肋',loft(main,a,b,GEARBOX_WALL-.018,GEARBOX_WALL+.048,.025)));
+ }
+ ribs.push(add(main,'主箱體接合法蘭',loft(main,GEARBOX_JOINT-.084,GEARBOX_JOINT,GEARBOX_WALL-.020,GEARBOX_WALL+.077,.025)));
+ ribs.push(add(tail,'倒檔端蓋接合法蘭',loft(tail,GEARBOX_JOINT,GEARBOX_JOINT+.077,GEARBOX_WALL-.020,GEARBOX_WALL+.077,.025)));
+
+ let end=GEARBOX_END;
+ function replace(mesh,geometry){
+  mesh.geometry.dispose();
+  mesh.geometry=geometry;
+  const edge=mesh.children.find(node=>node.isLineSegments);
+  edge.geometry.dispose();
+  edge.geometry=new THREE.EdgesGeometry(geometry,26);
+ }
+ return {main,tail,mainShell,frontWall,tailShell,tailWall,ribs,front:GEARBOX_FRONT,joint:GEARBOX_JOINT,get end(){return end;},
+  fitFinalDriveCover(){
+   if(end===GEARBOX_INSTALLED_END)return;
+   end=GEARBOX_INSTALLED_END;
+   replace(tailShell,loft(tail,GEARBOX_JOINT,end,0,GEARBOX_WALL));
+   replace(tailWall,wall(tail,end,.12,ports.installed));
+  }
+ };
+}
+
 function createTransmission(scene){
     const CENTER_DIST = 1.10; // Input (+0.55) to Output (-0.55)
     const INPUT_Y = 0.55;
@@ -6148,96 +6298,54 @@ function createTransmission(scene){
       registerHousingMesh(lug);
     }
 
-    const mainCaseGroup = new THREE.Group();
-    mainCaseGroup.position.set(-0.02, 0, 0.08);
-    transmissionRoot.add(mainCaseGroup);
-    registerExplodable(mainCaseGroup, new THREE.Vector3(0, 2.25, -1.65));
-
-    const caseOuterShape = new THREE.Shape();
-    caseOuterShape.absellipse(0, 0, 1.44, 1.24, 0, Math.PI * 2, false, 0);
-    const caseInnerHole = new THREE.Path();
-    caseInnerHole.absellipse(0, 0, 1.32, 1.12, 0, Math.PI * 2, true, 0);
-    caseOuterShape.holes.push(caseInnerHole);
-
-    const mainShellGeom = new THREE.ExtrudeGeometry(caseOuterShape, {
-      depth: 4.16,
-      bevelEnabled: true,
-      bevelSize: 0.03,
-      bevelThickness: 0.03,
-      curveSegments: 36
-    });
-    mainShellGeom.translate(0, 0, -2.08);
-    mainShellGeom.rotateY(Math.PI / 2);
-    const mainShellMesh = new THREE.Mesh(mainShellGeom, materials.housing);
-    mainCaseGroup.add(mainShellMesh);
-    registerHousingMesh(mainShellMesh);
-
-    const frontWallShape = new THREE.Shape();
-    frontWallShape.absellipse(0, 0, 1.42, 1.22, 0, Math.PI * 2, false, 0);
-    frontWallShape.holes.push(
-      new THREE.Path().absarc(-0.08, INPUT_Y, 0.29, 0, Math.PI * 2, true),
-      new THREE.Path().absarc(-0.08, OUTPUT_Y, 0.31, 0, Math.PI * 2, true)
-    );
-    const frontWallGeom = new THREE.ExtrudeGeometry(frontWallShape, { depth: 0.12, bevelEnabled: false, curveSegments: 32 });
-    frontWallGeom.rotateY(Math.PI / 2);
-    const frontWallMesh = new THREE.Mesh(frontWallGeom, materials.housing);
-    frontWallMesh.position.x = -2.08;
-    mainCaseGroup.add(frontWallMesh);
-    registerHousingMesh(frontWallMesh);
-
-    [-1.4, -0.5, 0.4, 1.3].forEach(rx => {
-      const hoopGeom = new THREE.TorusGeometry(1.36, 0.038, 8, 36);
-      hoopGeom.rotateY(Math.PI / 2);
-      hoopGeom.scale(1, 1.06, 0.91);
-      const hoop = new THREE.Mesh(hoopGeom, materials.housing);
-      hoop.position.x = rx;
-      mainCaseGroup.add(hoop);
-      registerHousingMesh(hoop);
-    });
-
+    // Measure the actual bevelled tooth tips; pitch circles alone miss the
+    // overhang. All of these parts retain their original transforms.
+    function gearClearance(gear, y, z) {
+      const points = gear.userData.gearMesh.geometry.attributes.position;
+      let from = Infinity, to = -Infinity, radius = 0;
+      for (let i = 0; i < points.count; i++) {
+        from = Math.min(from, points.getX(i));
+        to = Math.max(to, points.getX(i));
+        radius = Math.max(radius, Math.hypot(points.getY(i), points.getZ(i)));
+      }
+      radius += 0.046;
+      return { from: gear.position.x + from, to: gear.position.x + to, y, z, ry: radius, rz: radius };
+    }
+    const gearEnvelopes = [
+      ...Object.values(inputGearMeshes).map(gear => gearClearance(gear, INPUT_Y, 0)),
+      ...Object.values(outputGearMeshes).map(gear => gearClearance(gear, OUTPUT_Y, 0)),
+      gearClearance(inputRevGear, INPUT_Y, 0),
+      gearClearance(outputRevGear, OUTPUT_Y, 0),
+      { ...gearClearance(idlerGear, IDLER_Y, IDLER_Z),
+        from: REV_SPEC.idlerDisengagedX - REV_SPEC.width / 2,
+        to: REV_SPEC.idlerEngagedX + REV_SPEC.width / 2 },
+      ...RAIL_CONFIGS.flatMap(rail => {
+        const reverse = rail.id === 'R';
+        const low = rail.baseX - 0.08 - (reverse ? 0 : 0.15);
+        const high = rail.baseX + 0.08 + (reverse ? REV_SPEC.idlerEngagedX - REV_SPEC.idlerDisengagedX : 0.15);
+        return [
+          { from: low, to: high, y: rail.railY, z: rail.railZ, ry: .110, rz: .110 },
+          { from: reverse ? 1.375 : -1.825, to: reverse ? 2.925 : 1.825,
+            y: rail.railY, z: rail.railZ, ry: .076, rz: .076 }
+        ];
+      }),
+      // The intermediate bearing plate spans the joint, including its bevel.
+      { from: 2.01, to: 2.15, y: 0, z: 0.12, ry: 1.31, rz: 1.44 }
+    ];
+    const housing = createGearboxHousing(transmissionRoot, materials.housing, registerHousingMesh,
+      registerExplodable, gearEnvelopes, {
+        front: [[INPUT_Y, 0, .29], [OUTPUT_Y, 0, .31]],
+        standalone: [[OUTPUT_Y, 0, .24]],
+        installed: [[OUTPUT_Y, 0, .35], [IDLER_Y, IDLER_Z, .12], [.88, IDLER_Z, .06]]
+      });
     const towerBoss = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.36, 0.42, 0.42, 24),
+      new THREE.CylinderGeometry(0.36, 0.42, 0.46, 32),
       materials.housing
     );
-    towerBoss.position.set(0.12, 1.48, -0.08);
-    mainCaseGroup.add(towerBoss);
+    towerBoss.name = '箱殼換檔塔座';
+    towerBoss.position.set(0.10, 1.46, 0);
+    housing.main.add(towerBoss);
     registerHousingMesh(towerBoss);
-
-    const rearCoverGroup = new THREE.Group();
-    rearCoverGroup.position.set(2.68, -0.08, 0.18);
-    transmissionRoot.add(rearCoverGroup);
-    registerExplodable(rearCoverGroup, new THREE.Vector3(2.45, 0, 0));
-
-    const rearShellShape = new THREE.Shape();
-    rearShellShape.absellipse(0, 0, 1.24, 1.08, 0, Math.PI * 2, false, 0);
-    const rearInnerHole = new THREE.Path();
-    rearInnerHole.absellipse(0, 0, 1.12, 0.96, 0, Math.PI * 2, true, 0);
-    rearShellShape.holes.push(rearInnerHole);
-
-    const rearShellGeom = new THREE.ExtrudeGeometry(rearShellShape, {
-      depth: 1.05,
-      bevelEnabled: true,
-      bevelSize: 0.025,
-      bevelThickness: 0.025,
-      curveSegments: 32
-    });
-    rearShellGeom.translate(0, 0, -0.525);
-    rearShellGeom.rotateY(Math.PI / 2);
-    const rearShellMesh = new THREE.Mesh(rearShellGeom, materials.housing);
-    rearCoverGroup.add(rearShellMesh);
-    registerHousingMesh(rearShellMesh);
-
-    const rearCapShape = new THREE.Shape();
-    rearCapShape.absellipse(0, 0, 1.24, 1.08, 0, Math.PI * 2, false, 0);
-    rearCapShape.holes.push(
-      new THREE.Path().absarc(-0.18, OUTPUT_Y + 0.08, 0.24, 0, Math.PI * 2, true)
-    );
-    const rearCapGeom = new THREE.ExtrudeGeometry(rearCapShape, { depth: 0.12, bevelEnabled: true, bevelSize: 0.02, bevelThickness: 0.02, curveSegments: 32 });
-    rearCapGeom.rotateY(Math.PI / 2);
-    const rearCapMesh = new THREE.Mesh(rearCapGeom, materials.housing);
-    rearCapMesh.position.x = 0.48;
-    rearCoverGroup.add(rearCapMesh);
-    registerHousingMesh(rearCapMesh);
 
     // -------------------------------------------------------------------------
     // G. EXTERNAL SHIFT TURRET, LINKAGE & 3D H-PATTERN SHIFTER
@@ -6379,25 +6487,10 @@ function createTransmission(scene){
  const hGateKnobDot=null;
  // Reuse the original bell housing; isolate its material for independent clutch transparency.
  const bellMat=materials.housing.clone();bellhousingGroup.traverse(o=>{if(o.isMesh&&o.material===materials.housing)o.material=bellMat;});
- let externalBell=false,finalDriveFitted=false;
- return {root:transmissionRoot,presets:CAMERA_PRESETS, specs:GEAR_SPECS,gearBuilder:createHelicalGearMesh,bearingBuilder:createBallBearing,housingMaterial:materials.housing,
+ let externalBell=false;
+ return {root:transmissionRoot,presets:CAMERA_PRESETS, specs:GEAR_SPECS,gearBuilder:createHelicalGearMesh,bearingBuilder:createBallBearing,housingMaterial:materials.housing,housing,
  useExternalBellhousing(){externalBell=true;bellhousingGroup.visible=false;},
- fitFinalDriveCover(){
-  if(finalDriveFitted)return;finalDriveFitted=true;
-  // The integrated final-drive case starts immediately after this cover.
-  // Shorten only the shell's outlet end; all shafts, gears and mounts stay put.
-  const retreat=.29;
-  rearShellMesh.geometry.translate(.55,0,0).scale((1.1-retreat)/1.1,1,1).translate(-.55,0,0);
-  rearCapMesh.position.x-=retreat;
-  const shape=new THREE.Shape();shape.absellipse(0,0,1.24,1.08,0,Math.PI*2,false,0);
-  // Shape X becomes -Z after the geometry rotation. Keep each opening aligned
-  // with its actual output bearing, idler support and selector rail.
-  shape.holes.push(new THREE.Path().absarc(.18,OUTPUT_Y+.08,.35,0,Math.PI*2,true));
-  shape.holes.push(new THREE.Path().absarc(.18-IDLER_Z,IDLER_Y+.08,.12,0,Math.PI*2,true));
-  shape.holes.push(new THREE.Path().absarc(.18-IDLER_Z,.88+.08,.06,0,Math.PI*2,true));
-  rearCapMesh.geometry.dispose();rearCapMesh.geometry=new THREE.ExtrudeGeometry(shape,{depth:.12,bevelEnabled:true,bevelSize:.02,bevelThickness:.02,curveSegments:32});rearCapMesh.geometry.rotateY(Math.PI/2);
-  for(const o of [rearShellMesh,rearCapMesh])for(const line of o.children)if(line.isLineSegments){line.geometry.dispose();line.geometry=new THREE.EdgesGeometry(o.geometry,26);}
- },
+ fitFinalDriveCover:housing.fitFinalDriveCover,
  update(s,explosion,opacity,clutchOpacity){
  const f=explosion*explosion*(3-2*explosion);
  for(const item of explodableParts)item.obj.position.copy(item.basePos).addScaledVector(item.explodeOffset,f);
@@ -6873,6 +6966,314 @@ function createRunningGear(root,chassis,wheels,link,reg){
 }
 
 
+function createCockpit(interior,chassis,register,{leather,trim,silver,rubber}){
+ const metal=new THREE.MeshStandardMaterial({color:0x47515d,metalness:.72,roughness:.39});
+ const dashSkin=new THREE.MeshStandardMaterial({color:0x2c3844,roughness:.81,side:THREE.DoubleSide});
+ const inset=new THREE.MeshStandardMaterial({color:0x11171e,roughness:.73,side:THREE.DoubleSide});
+ const satin=new THREE.MeshStandardMaterial({color:0x737d85,metalness:.73,roughness:.36});
+ const red=new THREE.MeshStandardMaterial({color:0xec6b42,roughness:.50,emissive:0x762c19,emissiveIntensity:.40});
+ const amber=new THREE.MeshStandardMaterial({color:0xb65b25,roughness:.47,emissive:0xc06a28,emissiveIntensity:.55});
+ const lens=new THREE.MeshPhysicalMaterial({color:0xb4ccde,roughness:.12,metalness:.1,transparent:true,opacity:.09,depthWrite:false});
+ const {lerp}=THREE.MathUtils;
+
+ function group(parent,name){
+  const o=new THREE.Group();o.name=name;parent.add(o);return o;
+ }
+ function mesh(parent,name,geometry,material,position=[0,0,0]){
+  const o=new THREE.Mesh(geometry,material);
+  o.name=name;o.position.set(...position);
+  o.castShadow=true;o.receiveShadow=true;parent.add(o);return o;
+ }
+ function box(parent,name,material,size,position){
+  return mesh(parent,name,new THREE.BoxGeometry(...size),material,position);
+ }
+ function bar(parent,name,material,a,b,width,depth=width){
+  const p=new THREE.Vector3(...a),q=new THREE.Vector3(...b),delta=q.clone().sub(p);
+  const o=box(parent,name,material,[width,delta.length(),depth],p.lerp(q,.5).toArray());
+  o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());
+  return o;
+ }
+ function patch(parent,name,material,point,nu,nv,flip=false){
+  const positions=[],indices=[];
+  for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++)positions.push(...point(i/nu,j/nv));
+  for(let j=0;j<nv;j++)for(let i=0;i<nu;i++){
+   const a=j*(nu+1)+i,b=a+1,c=a+nu+1,d=c+1;
+   if(flip)indices.push(a,b,c,b,d,c);
+   else indices.push(a,c,b,b,c,d);
+  }
+  const geometry=new THREE.BufferGeometry();
+  geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  geometry.setIndex(indices);geometry.computeVertexNormals();
+  return mesh(parent,name,geometry,material);
+ }
+ function roundedPanel(parent,name,material,w,h,r,depth,position){
+  const x=w/2,y=h/2,shape=new THREE.Shape();
+  shape.moveTo(-x+r,-y);shape.lineTo(x-r,-y);shape.quadraticCurveTo(x,-y,x,-y+r);
+  shape.lineTo(x,y-r);shape.quadraticCurveTo(x,y,x-r,y);shape.lineTo(-x+r,y);
+  shape.quadraticCurveTo(-x,y,-x,y-r);shape.lineTo(-x,-y+r);shape.quadraticCurveTo(-x,-y,-x+r,-y);
+  const geometry=new THREE.ExtrudeGeometry(shape,{depth,bevelEnabled:false,curveSegments:8});
+  geometry.translate(0,0,-depth/2);
+  return mesh(parent,name,geometry,material,position);
+ }
+ function round(parent,name,material,r0,r1,length,position,segments=32){
+  const geometry=new THREE.CylinderGeometry(r0,r1,length,segments).rotateX(Math.PI/2);
+  return mesh(parent,name,geometry,material,position);
+ }
+ function facingDriver(parent,name,position,tilt){
+  const o=group(parent,name);
+  o.position.set(...position);
+  const side=new THREE.Vector3(-1,0,0);
+  const up=new THREE.Vector3(0,Math.cos(tilt),Math.sin(tilt));
+  const front=new THREE.Vector3().crossVectors(side,up);
+  o.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(side,up,front));
+  return o;
+ }
+
+ // The cross beam seats on both side rails. The forward panel meets the
+ // floor and the beam so the footwell and the front axle bay read separately.
+ const support=group(chassis,'儀表台橫樑與前艙隔板');
+ const crossbeam=box(support,'儀表台鋼製橫樑',metal,[1.386,.049,.076],[0,.700,.818]);
+ const sideMounts=[];
+ for(const sign of [-1,1]){
+  const x=sign*.665;
+  const foot=box(support,'側樑螺栓底座',metal,[.086,.019,.094],[x,.198,.820]);
+  const leg=bar(support,'儀表台側柱托架',metal,[x,.198,.820],[x,.696,.818],.034,.045);
+  const gusset=bar(support,'儀表台端部支撐',metal,[x,.689,.816],[sign*.747,.798,.834],.038,.046);
+  sideMounts.push({foot,leg,gusset});
+  for(const dz of [-.027,.027]){
+   mesh(support,'托架六角螺栓',new THREE.CylinderGeometry(.0085,.0085,.010,6),satin,[x,.212,.820+dz]);
+  }
+ }
+ patch(support,'前艙隔板',inset,(u,v)=>{
+  const x=(2*u-1)*lerp(.64,.686,v);
+  return [x,lerp(.233,.714,v),lerp(.881,.846,v)+.013*(1-(2*u-1)**2)];
+ },28,8);
+ for(const x of [-.47,.47]){
+  bar(support,'隔板壓筋',metal,[x,.246,.883],[x,.687,.853],.017,.009);
+ }
+
+ // A closed moulded dash tapers at the door ends and under the driver's knees.
+ const dashModule=group(interior,'儀表台總成');
+ register(dashModule,[0,.73,.09]);
+ function dashTop(u,v){
+  const s=2*u-1,edge=s*s,span=lerp(.777,.797,Math.sin(Math.PI*.86*v));
+  return [s*span,.841-.026*edge-.015*v+.008*Math.sin(Math.PI*v),lerp(.551+.061*edge,1.002-.033*edge,v)];
+ }
+ function dashBottom(u,v){
+  const s=2*u-1,top=dashTop(u,v);
+  return [top[0]*.963,lerp(.655+.057*Math.sin(s*Math.PI)**2+.042*s*s,.694,v),top[2]+lerp(.057,-.028,v)];
+ }
+ const dashboard=patch(dashModule,'成形儀表台上覆面',dashSkin,dashTop,60,22);
+ const interpolate=(a,b,t)=>a.map((x,i)=>lerp(x,b[i],t));
+ const dashFascia=(u,v)=>interpolate(dashBottom(u,0),dashTop(u,0),v);
+ patch(dashModule,'弧形儀表台面板',leather,dashFascia,60,12);
+ patch(dashModule,'儀表台下護板',dashSkin,dashBottom,60,18,true);
+ patch(dashModule,'前擋下緣收邊',dashSkin,(u,v)=>interpolate(dashBottom(u,1),dashTop(u,1),v),60,8,true);
+ for(const side of [0,1]){
+  patch(dashModule,'儀表台側飾板',dashSkin,(u,v)=>interpolate(dashBottom(side,u),dashTop(side,u),v),22,12,side===1);
+ }
+ // Raised edge vents and shallow glovebox inset are set into the main fascia.
+ for(const sign of [-1,1]){
+  const vent=facingDriver(dashModule,'側除霧出風口',[sign*.668,.792,.601],.20);
+  roundedPanel(vent,'圓角出風口座',inset,.119,.043,.007,.029);
+  for(let n=-2;n<=2;n++)box(vent,'出風口格柵',satin,[.092,.0026,.005],[0,n*.0058,.015]);
+  for(let n=0;n<6;n++){
+   const centre=dashTop(.5+sign*(.097+n*.036),.83);
+   centre[1]+=.0005;
+   box(dashModule,'前擋除霧細縫',inset,[.031,.003,.014],centre);
+  }
+ }
+ for(const [u0,u1,v0,v1,offset,mat,name] of [
+  [.137,.391,.111,.671,.0014,inset,'手套箱四周細縫'],
+  [.142,.386,.135,.644,.0023,dashSkin,'手套箱面板']
+ ]){
+  patch(dashModule,name,mat,(u,v)=>{
+   const p=dashFascia(lerp(u0,u1,u),lerp(v0,v1,v));p[2]-=offset;return p;
+  },22,8);
+ }
+ const glovePosition=dashFascia(.264,.53);glovePosition[2]-=.004;
+ const glove=facingDriver(dashModule,'副駕前方手套箱拉片',glovePosition,-.33);
+ roundedPanel(glove,'手套箱拉片',satin,.051,.010,.003,.009);
+
+ // The instruments use the same speed and engine values as the sim panel.
+ const cluster=group(dashModule,'左駕雙環儀表罩');
+ const hoodOutline=[
+  [-.151,-.071],[.151,-.071],[.151,.021],[.137,.059],[.107,.077],
+  [-.107,.077],[-.137,.059],[-.151,.021]
+ ];
+ const hood=new THREE.Shape(hoodOutline.map(p=>new THREE.Vector2(...p)));
+ const hoodGeometry=new THREE.ExtrudeGeometry(hood,{depth:.161,bevelEnabled:true,bevelThickness:.007,bevelSize:.006,bevelSegments:3});
+ const hoodVerts=hoodGeometry.attributes.position;
+ for(let i=0;i<hoodVerts.count;i++){
+  const t=THREE.MathUtils.clamp(hoodVerts.getZ(i)/.161,0,1);
+  hoodVerts.setXY(i,hoodVerts.getX(i)*(1-.13*t),hoodVerts.getY(i)-.064*t);
+ }
+ hoodGeometry.computeVertexNormals();
+ mesh(cluster,'收弧式儀表遮光罩',hoodGeometry,trim,[.34,.886,.643]);
+ const gauges=facingDriver(cluster,'座椅朝向速度與轉速表',[.34,.895,.627],.09);
+ const gaugeAngle=t=>1.25*Math.PI-1.5*Math.PI*t;
+ function gauge(label,max,interval,x){
+  const g=group(gauges,label);
+  g.position.x=x;
+  round(g,'儀表鋁圈',satin,.054,.051,.009,[0,0,0],48);
+  round(g,'儀表內圈',inset,.051,.051,.005,[0,0,.006],48);
+  const canvas=document.createElement('canvas');
+  canvas.width=384;canvas.height=384;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#111820';ctx.fillRect(0,0,384,384);
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  for(let n=0;n<=40;n++){
+   const t=n/40,a=gaugeAngle(t),major=n%5===0;
+   const dx=Math.cos(a),dy=-Math.sin(a);
+   ctx.strokeStyle=label==='轉速表'&&t>=.875?'#f28065':'#e5ded1';
+   ctx.lineWidth=major?4:2;
+   ctx.beginPath();ctx.moveTo(192+152*dx,192+152*dy);
+   const r=major?127:140;ctx.lineTo(192+r*dx,192+r*dy);ctx.stroke();
+  }
+  ctx.fillStyle='#eee5d7';ctx.font='bold 26px sans-serif';
+  for(let val=0;val<=max;val+=interval){
+   const a=gaugeAngle(val/max);
+   ctx.fillText(String(val),192+104*Math.cos(a),192-104*Math.sin(a));
+  }
+  ctx.font='22px sans-serif';
+  ctx.fillText(label==='轉速表'?'×1000 rpm':'km/h',192,270);
+  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+  const face=new THREE.MeshBasicMaterial({map:texture});
+  mesh(g,'刻度盤',new THREE.CircleGeometry(.0475,64),face,[0,0,.009]);
+  const pointerShape=new THREE.Shape([new THREE.Vector2(-.009,-.0023),new THREE.Vector2(.040,0),new THREE.Vector2(-.009,.0023)]);
+  const pointer=mesh(g,'讀值指針',new THREE.ShapeGeometry(pointerShape),red,[0,0,.011]);
+  round(g,'指針中心帽',satin,.0056,.0056,.004,[0,0,.013],20);
+  const window=mesh(g,'儀表透明罩',new THREE.CircleGeometry(.049,64),lens,[0,0,.016]);
+  window.castShadow=false;
+  return pointer;
+ }
+ const speedNeedle=gauge('速度表',320,80,-.064),rpmNeedle=gauge('轉速表',8,2,.064);
+
+ // The rim, spokes, centre pad and column share an axis and a single frame.
+ const steering=facingDriver(dashModule,'左駕方向盤與轉向柱',[.34,.872,.446],.32);
+ const rim=mesh(steering,'皮革方向盤輪圈',new THREE.TorusGeometry(.147,.015,18,96),rubber);
+ const hub=round(steering,'方向盤中央輪轂',metal,.047,.039,.040,[0,0,-.007],40);
+ const spokes=[];
+ for(const angle of [0,Math.PI,-Math.PI/2]){
+  const shape=new THREE.Shape([[.024,-.020],[.075,-.017],[.144,-.010],[.149,.009],[.072,.017],[.024,.020]].map(p=>new THREE.Vector2(...p)));
+  const geometry=new THREE.ExtrudeGeometry(shape,{depth:.011,bevelEnabled:true,bevelThickness:.0025,bevelSize:.0025,bevelSegments:2});
+  const vertices=geometry.attributes.position;
+  for(let i=0;i<vertices.count;i++)vertices.setZ(i,vertices.getZ(i)-.015*(1-vertices.getX(i)/.147));
+  geometry.computeVertexNormals();
+  const spoke=mesh(steering,'與輪圈同面的支輻',geometry,satin);
+  spoke.rotation.z=angle;spokes.push(spoke);
+ }
+ roundedPanel(steering,'中央喇叭墊',trim,.082,.068,.017,.020,[0,0,.015]);
+ roundedPanel(steering,'喇叭墊中飾件',satin,.028,.012,.004,.004,[0,.002,.027]);
+ const sleeve=round(steering,'方向盤後方花鍵套',metal,.029,.023,.059,[0,0,-.052],32);
+ const column=round(steering,'同軸轉向柱護管',trim,.031,.027,.277,[0,0,-.214],40);
+ const clampCollar=round(steering,'轉向柱夾座',metal,.038,.036,.034,[0,0,-.301],32);
+ const mountPoint=new THREE.Vector3(0,0,-.301).applyQuaternion(steering.quaternion).add(steering.position);
+ const columnBracket=bar(dashModule,'橫樑上的轉向柱承座',metal,[mountPoint.x,.699,.816],mountPoint.toArray(),.058,.044);
+
+ // A narrow console clears the existing seat bolsters. Its two feet seat on
+ // the real floor at y=.235; the shift lever keeps its original world pivot.
+ const consoleGroup=group(interior,'中央控制台與排檔鞍座');
+ register(consoleGroup,[0,.43,-.16]);
+ const feet=[-.126,.331].map(z=>box(chassis,'鞍座地板固定腳',metal,[.113,.029,.077],[0,.245,z]));
+ const sections=[
+  [-.307,.052,.372],[-.236,.056,.431],[-.125,.061,.472],[.064,.064,.491],
+  [.216,.068,.491],[.333,.087,.518],[.438,.105,.563],[.493,.114,.612],[.579,.119,.666],[.661,.118,.719]
+ ];
+ function consoleSection(z){
+  const b=sections.findIndex((s,i)=>i>0&&s[0]>=z);
+  const i=b<0?sections.length-1:b,a=sections[i-1],end=sections[i],t=(z-a[0])/(end[0]-a[0]);
+  return [lerp(a[1],end[1],t),lerp(a[2],end[2],t)];
+ }
+ const z0=sections[0][0],z1=sections.at(-1)[0],deckY=.491,bootZ=.14;
+ const baseY=.253;
+ for(const sign of [-1,1]){
+  patch(consoleGroup,'隨座椅收窄的鞍座側面',dashSkin,(u,v)=>{
+   const z=lerp(z0,z1,u),[w,y]=consoleSection(z);
+   return [sign*w*lerp(.81,1,v),lerp(baseY,y,v),z];
+  },100,10,sign<0);
+ }
+ for(const [from,to] of [[z0,.064],[.216,z1]]){
+  patch(consoleGroup,'鞍座上蓋',leather,(u,v)=>{
+   const z=lerp(from,to,v),[w,y]=consoleSection(z);
+   return [w*(2*u-1),y,z];
+  },28,36);
+ }
+ for(const z of [z0,z1]){
+  const [w,y]=consoleSection(z);
+  patch(consoleGroup,'中央鞍座封邊',dashSkin,(u,v)=>[w*(2*u-1)*lerp(.81,1,v),lerp(baseY,y,v),z],16,8,z===z1);
+ }
+ const bootDeck=new THREE.Shape([[-.064,-.064],[.064,-.064],[.068,-.216],[-.068,-.216]].map(p=>new THREE.Vector2(...p)));
+ bootDeck.holes.push(new THREE.Path().absellipse(0,-bootZ,.045,.055,0,Math.PI*2,true));
+ const bootDeckGeometry=new THREE.ExtrudeGeometry(bootDeck,{depth:.008,bevelEnabled:false,curveSegments:32});
+ bootDeckGeometry.rotateX(-Math.PI/2);bootDeckGeometry.translate(0,deckY-.008,0);
+ mesh(consoleGroup,'真實開孔的排檔護套座',bootDeckGeometry,inset);
+ const bootBezelShape=new THREE.Shape();
+ bootBezelShape.absellipse(0,0,.052,.061,0,Math.PI*2,false);
+ bootBezelShape.holes.push(new THREE.Path().absellipse(0,0,.045,.055,0,Math.PI*2,true));
+ const bootBezel=new THREE.ShapeGeometry(bootBezelShape,32);
+ bootBezel.rotateX(-Math.PI/2);
+ mesh(consoleGroup,'排檔孔金屬薄框',bootBezel,satin,[0,deckY+.0007,bootZ]);
+
+ const cabinLever=group(consoleGroup,'既有排檔桿樞軸');
+ cabinLever.position.set(0,.50,bootZ);
+ mesh(cabinLever,'排檔桿',new THREE.CylinderGeometry(.010,.010,.16,24),silver,[0,.08,0]);
+ mesh(cabinLever,'排檔頭',new THREE.SphereGeometry(.027,24,16),trim,[0,.17,0]);
+ const bootSegments=40,bootRings=10;
+ const bootGeometry=new THREE.BufferGeometry();
+ const bootPositions=new THREE.BufferAttribute(new Float32Array(3*(bootRings+1)*(bootSegments+1)),3);
+ bootGeometry.setAttribute('position',bootPositions);
+ const bootIndices=[];
+ for(let j=0;j<bootRings;j++)for(let i=0;i<bootSegments;i++){
+  const a=j*(bootSegments+1)+i,b=a+1,c=a+bootSegments+1,d=c+1;
+  bootIndices.push(a,c,b,b,c,d);
+ }
+ bootGeometry.setIndex(bootIndices);
+ const boot=mesh(consoleGroup,'隨桿身變形的皮革排檔套',bootGeometry,leather);
+ boot.frustumCulled=false;
+ const lower=new THREE.Vector3(),upper=new THREE.Vector3();
+ let previousX=NaN,previousZ=NaN;
+ function moveLever(x,z){
+  if(previousX===x&&previousZ===z)return;
+  previousX=x;previousZ=z;
+  cabinLever.rotation.set(x,0,z);
+  for(let j=0;j<=bootRings;j++){
+   const t=j/bootRings,fold=1+.145*Math.sin(Math.PI*8*t)*Math.sin(Math.PI*t);
+   for(let i=0;i<=bootSegments;i++){
+    const a=i*Math.PI*2/bootSegments,c=Math.cos(a),s=Math.sin(a);
+    lower.set(.044*c,deckY-.0003,bootZ+.054*s);
+    upper.set(.0115*c,.062,.0115*s).applyQuaternion(cabinLever.quaternion).add(cabinLever.position);
+    lower.lerp(upper,t);
+    lower.x*=fold;lower.z=bootZ+(lower.z-bootZ)*fold;
+    bootPositions.setXYZ(j*(bootSegments+1)+i,lower.x,lower.y,lower.z);
+   }
+  }
+  bootPositions.needsUpdate=true;bootGeometry.computeVertexNormals();
+ }
+ const stack=facingDriver(consoleGroup,'連到儀表台的中央控制面板',[0,.705,.538],.30);
+ roundedPanel(stack,'中控霧面飾框',trim,.224,.188,.012,.029,[0,0,.002]);
+ roundedPanel(stack,'收音機嵌入面板',inset,.188,.048,.004,.009,[0,.034,.019]);
+ roundedPanel(stack,'收音機琥珀色顯示窗',amber,.101,.009,.002,.003,[-.013,.044,.025]);
+ for(const x of [-.060,-.031,-.002,.027,.056]){
+  roundedPanel(stack,'收音機按鍵',satin,.018,.006,.002,.004,[x,.022,.025]);
+ }
+ for(const x of [-.061,0,.061]){
+  round(stack,'暖風控制旋鈕',inset,.017,.015,.012,[x,-.029,.025],24);
+  roundedPanel(stack,'旋鈕刻線',satin,.0027,.010,.0008,.003,[x,-.024,.032]);
+ }
+ const consoleBridge=box(consoleGroup,'中控面板與儀表台的接合座',dashSkin,[.199,.092,.118],[0,.737,.591]);
+ moveLever(0,0);
+ return {dashboard,dashModule,support,crossbeam,sideMounts,consoleGroup,consoleBridge,feet,cabinLever,boot,
+  steering,rim,hub,spokes,sleeve,column,clampCollar,columnBracket,speedNeedle,rpmNeedle,
+  update(state){
+   moveLever(state.lever.x*.9,-state.lever.z*.9);
+   speedNeedle.rotation.z=gaugeAngle(Math.min(1,Math.abs(state.v)*3.6/320));
+   rpmNeedle.rotation.z=gaugeAngle(Math.min(1,state.we*60/(2*Math.PI*8000)));
+  }
+ };
+}
+
+
 // Original running gear and cabin beneath the independently mounted coachwork.
 function createVehicle(scene,engine,link){
  const root=new THREE.Group();root.name='AUREL R8 · 後置後驅';scene.add(root);
@@ -6911,11 +7312,8 @@ function createVehicle(scene,engine,link){
   for(const sx of [-.23,.23])box([.075,.20,.44],leather,[sx,.07,0],seat);
   tube([[.16,.64,-.18],[.06,.26,-.13],[-.14,.03,.12]],.016,belt,seat);
  }
- const dashboard=box([1.40,.17,.27],leather,[0,.76,.73],interior);dashboard.name='座艙儀表台';box([.20,.23,.74],carbon,[0,.38,.14],interior);
- beam([.35,.72,.65],[.35,.91,.50],.025,trim,interior);
- const steering=mesh(new THREE.TorusGeometry(.145,.016,10,36),trim,[.35,.91,.49],interior);steering.rotation.x=-.3;
- for(const a of [0,2.2,4.1]){const spoke=box([.024,.13,.018],silver,[.35+Math.sin(a)*.065,.91+Math.cos(a)*.065,.49],interior);spoke.rotation.z=-a;}
- const cabinLever=new THREE.Group();cabinLever.position.set(0,.50,.14);interior.add(cabinLever);beam([0,0,0],[0,.16,0],.01,silver,cabinLever);mesh(new THREE.SphereGeometry(.027,16,10),trim,[0,.17,0],cabinLever);
+ const cockpit=createCockpit(interior,chassis,reg,{leather,trim,silver,rubber});
+ const {dashboard,cabinLever}=cockpit;
  // Four complete hubs, brake discs, fixed calipers and suspension links.
  for(const station of wheelStations()){
   const assembly=new THREE.Group();assembly.name=station.id+(station.driven?' 驅動輪':' 從動輪');assembly.position.set(station.x,CAR.wheelRadius,station.z);root.add(assembly);reg(assembly,[station.side*.85,.04,0]);
@@ -6937,7 +7335,7 @@ function createVehicle(scene,engine,link){
  const exhaust=createExhaust(scene,engine);
  const coachwork=createCoachwork(exterior,{paint,glass:windowMat,rearLight,reverse:reverseMat},exhaust.branches,reg);
  const paintedParts=[];exterior.traverse(o=>{if(o.isMesh&&o.material===paint)paintedParts.push(o);});
- return {root,exterior,interior,chassis,wheels,shafts,stubs,runningGear,exhaust,get paint(){return activePaint;},paintedParts,paintMaterials:[paint,ghostPaint],windowMat,section:bodySection,arch:wheelArch,cabin:coachwork.cabin,coachwork,dashboard,cabinLever,setPaint,get paintId(){return paintId;},frontInspectionMaterials,reverseMat,rearLight,
+ return {root,exterior,interior,chassis,wheels,shafts,stubs,runningGear,exhaust,get paint(){return activePaint;},paintedParts,paintMaterials:[paint,ghostPaint],windowMat,section:bodySection,arch:wheelArch,cabin:coachwork.cabin,coachwork,cockpit,dashboard,cabinLever,setPaint,get paintId(){return paintId;},frontInspectionMaterials,reverseMat,rearLight,
  update(s,explosion,mode,frontInspection=false){const f=explosion*explosion*(3-2*explosion);for(const p of exp)p.o.position.copy(p.base).addScaledVector(p.v,f);
   exterior.visible=mode!=='transparent';const opacity=mode==='bodyglass'?.16:mode==='exploded'?.52:1;
   // Keep opaque and transparent shader/render-pass state on separate materials.
@@ -6948,7 +7346,7 @@ function createVehicle(scene,engine,link){
   const inspect=(frontInspection||mode==='exploded')&&!['full','bodyglass'].includes(mode);
   for(const m of frontInspectionMaterials){if(m.transparent!==inspect)m.needsUpdate=true;m.opacity=inspect?.18:1;m.transparent=inspect;m.depthWrite=!inspect;}
   runningGear.inspectFront(inspect);
-  cabinLever.rotation.x=s.lever.x*.9;cabinLever.rotation.z=-s.lever.z*.9;
+  cockpit.update(s);
   for(const w of wheels)w.rotating.rotation.x=s.aw;for(const a of shafts)a.spin.rotation.x=s.aw*a.rotationSign;for(const stub of stubs)stub.rotation.x=s.aw;
   reverseMat.color.setHex(s.gear==='R'?0xffffff:0x52606a);reverseMat.emissive.setHex(s.gear==='R'?0xdaeeff:0);reverseMat.emissiveIntensity=s.gear==='R'?2:0;
   rearLight.emissiveIntensity=s.brake>.02?2.5:.6;
@@ -7278,6 +7676,7 @@ function startDriveline(root){
  $$('[data-gear]').forEach(b=>b.onclick=()=>{cancelDemo();if(!frozen())sim.requestGear(b.dataset.gear);});
  for(const name of ['clutch','brake','throttle']){$(name).oninput=()=>{cancelDemo();if(!frozen())sim.s[name]=+$(name).value/100;};}
  const held=new Set(),controlled=new Set(),mapping={KeyW:'throttle',ArrowUp:'throttle',KeyS:'brake',ArrowDown:'brake',KeyC:'clutch',ShiftLeft:'clutch',ShiftRight:'clutch'};
+ const keyboardClutchReleaseRate=.63;
  root.addEventListener('pointerdown',()=>{root.dataset.focused='1';});
  window.addEventListener('keydown',e=>{if(!root.isConnected||$('help').open||(['SELECT','TEXTAREA'].includes(e.target.tagName)||e.target.isContentEditable||e.target.tagName==='INPUT'&&e.target.type!=='range'))return;const p=mapping[e.code];if(p){e.preventDefault();cancelDemo();held.add(e.code);controlled.add(p);return;}if(e.repeat)return;if(e.code==='KeyD'||e.code==='KeyA'){e.preventDefault();cancelDemo();if(!frozen())sim.requestSequential(e.code==='KeyD'?1:-1);}else if(e.code==='Enter')$('ignition').click();else if(e.code==='KeyP')$('pause').click();else if(/^Digit[1-6]$/.test(e.code)){cancelDemo();if(!frozen())sim.requestGear(e.code.slice(-1));}else if(e.code==='KeyN'||e.code==='KeyR'){cancelDemo();if(!frozen())sim.requestGear(e.code.slice(-1));}});
  window.addEventListener('keyup',e=>held.delete(e.code));
@@ -7373,7 +7772,7 @@ function startDriveline(root){
  // Keep 480 integration ticks per real second, including at 0.01×.
  // A constant simulated tick would otherwise update the mechanism only 4.8 times/s.
  const fixedDt=P.step*Math.min(1,view.scale);
- acc+=dt*view.scale;while(acc>=fixedDt){if(demo&&!demo.wall)demoStep(fixedDt);if(!demo){for(const p of controlled){const down=[...held].some(k=>mapping[k]===p);const rate=p==='clutch'?(down?4:.42):p==='throttle'?(down?1.2:2.5):4;sim.s[p]=Math.max(0,Math.min(1,sim.s[p]+(down?1:-1)*rate*fixedDt));if(!down&&sim.s[p]===0)controlled.delete(p);}}
+ acc+=dt*view.scale;while(acc>=fixedDt){if(demo&&!demo.wall)demoStep(fixedDt);if(!demo){for(const p of controlled){const down=[...held].some(k=>mapping[k]===p);const rate=p==='clutch'?(down?4:keyboardClutchReleaseRate):p==='throttle'?(down?1.2:2.5):4;sim.s[p]=Math.max(0,Math.min(1,sim.s[p]+(down?1:-1)*rate*fixedDt));if(!down&&sim.s[p]===0)controlled.delete(p);}}
  if(!frozen()){
   if(releaseDriver){sim.s.throttle=0;sim.s.brake=0;releaseDriver=false;}touch.flush();if(race.phase==='preparing'){sim.s.clutch=1;sim.s.throttle=0;sim.s.brake=1;}
   const before={time:sim.s.time,v:sim.s.v,distance:sim.s.distance},preparing=race.phase==='preparing';sim.step(fixedDt);race.step(before,sim.s);
