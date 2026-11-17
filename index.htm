@@ -1,7 +1,8 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>DRIVELINE · V8 手排動力實驗室</title><style>html,body{margin:0;background:#0b1017;color:#dce4ec;font-family:Inter,"Noto Sans TC",system-ui,sans-serif}#driveline-app{--panel:#111923;--line:#28333f;--muted:#8595a7;--teal:#72ddc7;--amber:#edb66b;max-width:1800px;margin:auto;background:#0b1017;color:#dce4ec;font:14px/1.5 Inter,"Noto Sans TC",system-ui,sans-serif}#driveline-app *{box-sizing:border-box}#driveline-app button,#driveline-app select{font:inherit;color:inherit;border:1px solid var(--line);background:#17212d;border-radius:6px;padding:8px 12px;cursor:pointer;white-space:nowrap}#driveline-app button:hover{background:#273645;border-color:#4f6475}#driveline-app button:focus-visible,#driveline-app input:focus-visible{outline:2px solid var(--teal);outline-offset:3px}#driveline-app button.selected{background:#d6e8e6;border-color:#d6e8e6;color:#15262c}#driveline-app button:disabled{opacity:.4;cursor:default}#driveline-app .topbar{height:78px;display:flex;align-items:center;justify-content:space-between;padding:0 30px;border-bottom:1px solid var(--line)}#driveline-app .brand{display:flex;gap:14px;align-items:center}#driveline-app .brand-icon{font-size:29px;font-weight:700;letter-spacing:-6px;color:var(--teal);width:39px}#driveline-app .brand-icon span{color:#728da5}#driveline-app .brand b{display:block;letter-spacing:3px;font-size:16px;font-weight:600}#driveline-app .brand div>span{display:block;font-size:11px;color:var(--muted);letter-spacing:2px}#driveline-app .header-right{display:flex;gap:12px;align-items:center}#driveline-app .build-label{font:11px ui-monospace,monospace;letter-spacing:1px;color:#9aabbc;margin-right:20px}#driveline-app .build-label i{margin:0 10px;color:var(--teal)}#driveline-app .quiet{background:transparent;font-size:12px}#driveline-app .stage{height:570px;position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,#1d2b39,#0b1017 80%)}#driveline-app #scene{position:absolute;inset:0;touch-action:none}#driveline-app #scene canvas{display:block;width:100%;height:100%;touch-action:none}#driveline-app #load-message{position:absolute;top:48%;width:100%;text-align:center;color:var(--teal);pointer-events:none}#driveline-app .scene-top{position:absolute;top:22px;left:30px;right:30px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}#driveline-app .scene-caption{display:flex;flex-direction:column;gap:6px}#driveline-app .eyebrow{font:10px ui-monospace,monospace;color:#8da3b5;letter-spacing:1.8px}#driveline-app #view-label{font-size:13px;letter-spacing:1px}#driveline-app .view-modes{display:flex;gap:4px;background:#0e1620;padding:4px;border:1px solid var(--line);border-radius:8px;pointer-events:auto}#driveline-app .view-modes button{border:0;background:transparent;font-size:12px;padding:6px 13px}#driveline-app .view-modes button.selected{background:#d6e8e6}#driveline-app .instruments{position:absolute;top:91px;left:30px;display:flex;gap:24px;align-items:center;pointer-events:none}#driveline-app .speed{min-width:105px;position:relative}#driveline-app #speed{font:38px ui-monospace,monospace;letter-spacing:-2px}#driveline-app small{font-size:11px;color:var(--muted)}#driveline-app .speed small{margin-left:6px}#driveline-app .speed label,#driveline-app .rpm label{display:block;font-size:11px;color:var(--teal)}#driveline-app .rpm{width:112px;border-left:1px solid #33414f;padding-left:20px;box-sizing:content-box}#driveline-app #rpm{font:24px ui-monospace,monospace;letter-spacing:-1px}#driveline-app .rpm small{margin-left:5px}#driveline-app .rpm-track,#driveline-app .slip-track{height:3px;margin:7px 0;background:#2d3947;overflow:hidden}#driveline-app .rpm-track i,#driveline-app .slip-track i{display:block;width:0;height:100%;background:var(--teal)}#driveline-app .gear-display{border-left:1px solid #33414f;padding-left:20px;display:flex;flex-direction:column}#driveline-app .gear-display small{letter-spacing:2px}#driveline-app #gear{font:33px ui-monospace,monospace;color:var(--amber)}#driveline-app .camera-strip{position:absolute;bottom:48px;left:50%;transform:translateX(-50%);display:flex;gap:3px;padding:5px;border-radius:9px;background:#101924eb;border:1px solid #2c3c4a;max-width:calc(100% - 40px)}#driveline-app .camera-strip button{background:transparent;border:0;padding:6px 12px;font-size:12px}#driveline-app .camera-strip button.selected{background:#d6e8e6}#driveline-app .parts-settings{position:absolute;top:85px;right:30px;width:175px;font-size:12px}#driveline-app .parts-settings details{background:#0d1621e8;border:1px solid #2b3947;border-radius:7px;padding:10px 12px}#driveline-app summary{cursor:pointer}#driveline-app .settings-inner{padding-top:12px;display:grid;gap:12px}#driveline-app .settings-inner label{display:flex;align-items:center;gap:8px;flex-wrap:wrap}#driveline-app .settings-inner input[type=range]{width:100%}#driveline-app .slip-panel{position:absolute;left:30px;bottom:105px;padding:14px 16px;width:225px;border-left:2px solid #a5c0cb;background:#0e1721de;border-radius:0 7px 7px 0;pointer-events:none}#driveline-app .slip-readout{display:flex;gap:7px;align-items:baseline;margin-top:7px}#driveline-app .slip-readout>b{font:24px ui-monospace,monospace}#driveline-app .slip-readout>span{font-size:10px;color:var(--muted)}#driveline-app .slip-readout em{font-size:11px;color:var(--amber);font-style:normal;margin-left:auto}#driveline-app .shaft-rpms{font:10px ui-monospace,monospace;display:flex;justify-content:space-between;margin-top:7px;color:#92a5b7}#driveline-app .shaft-rpms b{font-weight:400;color:#dce4ec}#driveline-app #torque{font-size:10px;color:#9eafbd}#driveline-app .slip-track i{background:var(--amber)}#driveline-app #pause-overlay{position:absolute;top:200px;left:50%;transform:translateX(-50%);background:#142230e8;color:var(--amber);border:1px solid #6c634a;border-radius:6px;padding:9px 16px;font-size:12px;pointer-events:none;white-space:nowrap}#driveline-app [hidden]{display:none!important}#driveline-app .scene-bottom{position:absolute;bottom:16px;left:30px;right:30px;display:flex;justify-content:space-between;font-size:10px;letter-spacing:.5px;color:#7f93a5;pointer-events:none}#driveline-app .status-line{min-height:40px;display:flex;align-items:center;gap:10px;padding:8px 30px;background:#111b26;border-top:1px solid #25313d;border-bottom:1px solid #25313d;font-size:12px}#driveline-app #status-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);flex:none}#driveline-app #phase{margin-left:auto;color:#8ba1b5;font-size:10px;white-space:nowrap}#driveline-app .cockpit{display:grid;grid-template-columns:170px 1fr 240px;gap:30px;padding:24px 30px;background:#0e151e}#driveline-app .ignition-controls{display:flex;flex-direction:column;justify-content:center;gap:9px}#driveline-app .start-button{background:#5dbba5;color:#0b2525;border-color:#5dbba5;font-weight:600}#driveline-app .start-button span{margin-right:9px}#driveline-app .transport{display:flex;gap:6px}#driveline-app .transport>*{font-size:11px;padding:7px 8px}#driveline-app .ignition-controls>small{font-size:10px;color:#718497}#driveline-app .pedals{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;align-content:center;border-left:1px solid #28333f;border-right:1px solid #28333f;padding:0 30px}#driveline-app .pedal>div:first-child{display:flex;justify-content:space-between;font-size:12px;margin-bottom:16px;gap:5px}#driveline-app .pedal b{font:11px ui-monospace,monospace;color:#a9bbca}#driveline-app kbd{font:10px ui-monospace,monospace;color:#647c90;margin-left:5px}#driveline-app input[type=range]{accent-color:var(--teal);width:100%;margin:0;cursor:ew-resize;touch-action:none}#driveline-app .pedal input{height:28px}#driveline-app .brake-pedal input{accent-color:#d68d75}#driveline-app .throttle-pedal input{accent-color:var(--amber)}#driveline-app .pedal-ends{display:flex;justify-content:space-between;color:#70879a;font-size:10px;margin-top:6px}#driveline-app .shifter-title{display:flex;justify-content:space-between;font:10px ui-monospace,monospace;letter-spacing:1.2px;color:#a6bacb}#driveline-app .shifter-title small{font:10px system-ui;letter-spacing:0;color:#667e92}#driveline-app .h-gate{position:relative;height:101px;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:36px 36px;gap:27px 22px;margin-top:8px}#driveline-app .h-gate svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}#driveline-app .h-gate path{fill:none;stroke:#354a5c;stroke-width:3}#driveline-app .h-gate button{z-index:1;font:15px ui-monospace,monospace;padding:0;border-radius:5px}#driveline-app .h-gate [data-gear=R]{color:#e6a991}#driveline-app .h-gate .selected{color:#15262c}#driveline-app #gate-dot{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 12px #72ddc760;pointer-events:none;z-index:2}#driveline-app .verification{padding:22px 30px 20px;border-top:1px solid #28333f}#driveline-app .verification-heading{display:flex;align-items:center;gap:15px;margin-bottom:13px;font-size:12px}#driveline-app #cancel-demo{margin-left:auto;font-size:11px;padding:4px 9px;color:var(--amber)}#driveline-app .test-buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}#driveline-app .test-buttons button{display:flex;align-items:center;gap:12px;text-align:left;background:#111a24;padding:12px;font-size:12px}#driveline-app .test-buttons small{font:12px ui-monospace,monospace;color:#66859a}#driveline-app .test-buttons span{margin-left:auto;color:var(--teal)}#driveline-app #demo-report{font-size:11px;line-height:1.8;color:#a1b4c4;margin-top:12px;min-height:20px}#driveline-app footer{display:flex;justify-content:space-between;padding:15px 30px;border-top:1px solid #1f2b37;color:#526d83;font:9px ui-monospace,monospace;letter-spacing:.7px}#driveline-app dialog{max-width:630px;width:calc(100% - 30px);background:#121e2a;color:#dce4ec;border:1px solid #475b6d;border-radius:12px;padding:28px;font-size:13px}#driveline-app dialog::backdrop{background:#02070cb8}#driveline-app #help-close{float:right}#driveline-app dialog h2{font-size:21px;font-weight:500;margin:6px 0 24px}#driveline-app dialog p{line-height:1.9;color:#adbccc}#driveline-app dialog nav{display:flex;flex-wrap:wrap;gap:20px;margin-top:22px}#driveline-app a{color:var(--teal)}
+<!doctype html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>DRIVELINE · V8 手排動力實驗室</title><style>html,body{margin:0;background:#0b1017;color:#dce4ec;font-family:Inter,"Noto Sans TC",system-ui,sans-serif}#driveline-app{--panel:#111923;--line:#28333f;--muted:#8595a7;--teal:#72ddc7;--amber:#edb66b;max-width:1800px;margin:auto;background:#0b1017;color:#dce4ec;font:14px/1.5 Inter,"Noto Sans TC",system-ui,sans-serif}#driveline-app *{box-sizing:border-box}#driveline-app button,#driveline-app select{font:inherit;color:inherit;border:1px solid var(--line);background:#17212d;border-radius:6px;padding:8px 12px;cursor:pointer;white-space:nowrap}#driveline-app button:hover{background:#273645;border-color:#4f6475}#driveline-app button:focus-visible,#driveline-app input:focus-visible{outline:2px solid var(--teal);outline-offset:3px}#driveline-app button.selected{background:#d6e8e6;border-color:#d6e8e6;color:#15262c}#driveline-app button:disabled{opacity:.4;cursor:default}#driveline-app .topbar{height:78px;display:flex;align-items:center;justify-content:space-between;padding:0 30px;border-bottom:1px solid var(--line)}#driveline-app .brand{display:flex;gap:14px;align-items:center}#driveline-app .brand-icon{font-size:29px;font-weight:700;letter-spacing:-6px;color:var(--teal);width:39px}#driveline-app .brand-icon span{color:#728da5}#driveline-app .brand b{display:block;letter-spacing:3px;font-size:16px;font-weight:600}#driveline-app .brand div>span{display:block;font-size:11px;color:var(--muted);letter-spacing:2px}#driveline-app .header-right{display:flex;gap:12px;align-items:center}#driveline-app .build-label{font:11px ui-monospace,monospace;letter-spacing:1px;color:#9aabbc;margin-right:20px}#driveline-app .build-label i{margin:0 10px;color:var(--teal)}#driveline-app .quiet{background:transparent;font-size:12px}#driveline-app .stage{height:570px;position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,#1d2b39,#0b1017 80%)}#driveline-app .scene-frame{position:absolute;inset:0;min-width:0;min-height:0;z-index:0}
+#driveline-app #scene{position:absolute;inset:0;touch-action:none}#driveline-app #scene canvas{display:block;width:100%;height:100%;touch-action:none}#driveline-app #load-message{position:absolute;top:48%;width:100%;text-align:center;color:var(--teal);pointer-events:none}#driveline-app .scene-top{position:absolute;top:22px;left:30px;right:30px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;z-index:2}#driveline-app .scene-caption{display:flex;flex-direction:column;gap:6px}#driveline-app .eyebrow{font:10px ui-monospace,monospace;color:#8da3b5;letter-spacing:1.8px}#driveline-app #view-label{font-size:13px;letter-spacing:1px}#driveline-app .view-modes{display:flex;gap:4px;background:#0e1620;padding:4px;border:1px solid var(--line);border-radius:8px;pointer-events:auto}#driveline-app .view-modes button{border:0;background:transparent;font-size:12px;padding:6px 13px}#driveline-app .view-modes button.selected{background:#d6e8e6}#driveline-app .instruments{position:absolute;top:91px;left:30px;display:flex;gap:24px;align-items:center;pointer-events:none;z-index:2}#driveline-app .speed{min-width:105px;position:relative}#driveline-app #speed{font:38px ui-monospace,monospace;letter-spacing:-2px}#driveline-app small{font-size:11px;color:var(--muted)}#driveline-app .speed small{margin-left:6px}#driveline-app .speed label,#driveline-app .rpm label{display:block;font-size:11px;color:var(--teal)}#driveline-app .rpm{width:112px;border-left:1px solid #33414f;padding-left:20px;box-sizing:content-box}#driveline-app #rpm{font:24px ui-monospace,monospace;letter-spacing:-1px}#driveline-app .rpm small{margin-left:5px}#driveline-app .rpm-track,#driveline-app .slip-track{height:3px;margin:7px 0;background:#2d3947;overflow:hidden}#driveline-app .rpm-track i,#driveline-app .slip-track i{display:block;width:0;height:100%;background:var(--teal)}#driveline-app .gear-display{border-left:1px solid #33414f;padding-left:20px;display:flex;flex-direction:column}#driveline-app .gear-display small{letter-spacing:2px}#driveline-app #gear{font:33px ui-monospace,monospace;color:var(--amber)}#driveline-app .camera-strip button{background:transparent;border:0;padding:6px 12px;font-size:12px}#driveline-app .camera-strip button.selected{background:#d6e8e6}#driveline-app .parts-settings{position:absolute;top:85px;right:30px;width:175px;font-size:12px}#driveline-app .parts-settings details{background:#0d1621e8;border:1px solid #2b3947;border-radius:7px;padding:10px 12px}#driveline-app summary{cursor:pointer}#driveline-app .settings-inner{padding-top:12px;display:grid;gap:12px}#driveline-app .settings-inner label{display:flex;align-items:center;gap:8px;flex-wrap:wrap}#driveline-app .settings-inner input[type=range]{width:100%}#driveline-app .slip-panel{position:absolute;left:30px;bottom:105px;padding:14px 16px;width:225px;border-left:2px solid #a5c0cb;background:#0e1721de;border-radius:0 7px 7px 0;pointer-events:none}#driveline-app .slip-readout{display:flex;gap:7px;align-items:baseline;margin-top:7px}#driveline-app .slip-readout>b{font:24px ui-monospace,monospace}#driveline-app .slip-readout>span{font-size:10px;color:var(--muted)}#driveline-app .slip-readout em{font-size:11px;color:var(--amber);font-style:normal;margin-left:auto}#driveline-app .shaft-rpms{font:10px ui-monospace,monospace;display:flex;justify-content:space-between;margin-top:7px;color:#92a5b7}#driveline-app .shaft-rpms b{font-weight:400;color:#dce4ec}#driveline-app #torque{font-size:10px;color:#9eafbd}#driveline-app .slip-track i{background:var(--amber)}#driveline-app #pause-overlay{position:absolute;top:200px;left:50%;transform:translateX(-50%);background:#142230e8;color:var(--amber);border:1px solid #6c634a;border-radius:6px;padding:9px 16px;font-size:12px;pointer-events:none;white-space:nowrap}#driveline-app [hidden]{display:none!important}#driveline-app .scene-bottom{position:absolute;bottom:16px;left:30px;right:30px;display:flex;justify-content:space-between;font-size:10px;letter-spacing:.5px;color:#7f93a5;pointer-events:none}#driveline-app .status-line{min-height:40px;display:flex;align-items:center;gap:10px;padding:8px 30px;background:#111b26;border-top:1px solid #25313d;border-bottom:1px solid #25313d;font-size:12px}#driveline-app #status-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);flex:none}#driveline-app #phase{margin-left:auto;color:#8ba1b5;font-size:10px;white-space:nowrap}#driveline-app .cockpit{display:grid;grid-template-columns:170px 1fr 240px;gap:30px;padding:24px 30px;background:#0e151e}#driveline-app .ignition-controls{display:flex;flex-direction:column;justify-content:center;gap:9px}#driveline-app .start-button{background:#5dbba5;color:#0b2525;border-color:#5dbba5;font-weight:600}#driveline-app .start-button span{margin-right:9px}#driveline-app .transport{display:flex;gap:6px}#driveline-app .transport>*{font-size:11px;padding:7px 8px}#driveline-app .ignition-controls>small{font-size:10px;color:#718497}#driveline-app .pedals{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;align-content:center;border-left:1px solid #28333f;border-right:1px solid #28333f;padding:0 30px}#driveline-app .pedal>div:first-child{display:flex;justify-content:space-between;font-size:12px;margin-bottom:16px;gap:5px}#driveline-app .pedal b{font:11px ui-monospace,monospace;color:#a9bbca}#driveline-app kbd{font:10px ui-monospace,monospace;color:#647c90;margin-left:5px}#driveline-app input[type=range]{accent-color:var(--teal);width:100%;margin:0;cursor:ew-resize;touch-action:none}#driveline-app .pedal input{height:28px}#driveline-app .brake-pedal input{accent-color:#d68d75}#driveline-app .throttle-pedal input{accent-color:var(--amber)}#driveline-app .pedal-ends{display:flex;justify-content:space-between;color:#70879a;font-size:10px;margin-top:6px}#driveline-app .shifter-title{display:flex;justify-content:space-between;font:10px ui-monospace,monospace;letter-spacing:1.2px;color:#a6bacb}#driveline-app .shifter-title small{font:10px system-ui;letter-spacing:0;color:#667e92}#driveline-app .h-gate{position:relative;height:101px;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:36px 36px;gap:27px 22px;margin-top:8px}#driveline-app .h-gate svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}#driveline-app .h-gate path{fill:none;stroke:#354a5c;stroke-width:3}#driveline-app .h-gate button{z-index:1;font:15px ui-monospace,monospace;padding:0;border-radius:5px}#driveline-app .h-gate [data-gear=R]{color:#e6a991}#driveline-app .h-gate .selected{color:#15262c}#driveline-app #gate-dot{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 12px #72ddc760;pointer-events:none;z-index:2}#driveline-app .verification{padding:22px 30px 20px;border-top:1px solid #28333f}#driveline-app .verification-heading{display:flex;align-items:center;gap:15px;margin-bottom:13px;font-size:12px}#driveline-app #cancel-demo{margin-left:auto;font-size:11px;padding:4px 9px;color:var(--amber)}#driveline-app .test-buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}#driveline-app .test-buttons button{display:flex;align-items:center;gap:12px;text-align:left;background:#111a24;padding:12px;font-size:12px}#driveline-app .test-buttons small{font:12px ui-monospace,monospace;color:#66859a}#driveline-app .test-buttons span{margin-left:auto;color:var(--teal)}#driveline-app #demo-report{font-size:11px;line-height:1.8;color:#a1b4c4;margin-top:12px;min-height:20px}#driveline-app footer{display:flex;justify-content:space-between;padding:15px 30px;border-top:1px solid #1f2b37;color:#526d83;font:9px ui-monospace,monospace;letter-spacing:.7px}#driveline-app dialog{max-width:630px;width:calc(100% - 30px);background:#121e2a;color:#dce4ec;border:1px solid #475b6d;border-radius:12px;padding:28px;font-size:13px}#driveline-app dialog::backdrop{background:#02070cb8}#driveline-app #help-close{float:right}#driveline-app dialog h2{font-size:21px;font-weight:500;margin:6px 0 24px}#driveline-app dialog p{line-height:1.9;color:#adbccc}#driveline-app dialog nav{display:flex;flex-wrap:wrap;gap:20px;margin-top:22px}#driveline-app a{color:var(--teal)}
 @media(min-width:1500px){#driveline-app .stage{height:640px}}
 @media(max-width:1050px){#driveline-app .cockpit{grid-template-columns:145px 1fr 185px;gap:18px;padding:20px}#driveline-app .pedals{padding:0 18px;gap:12px}#driveline-app .build-label{display:none}#driveline-app .h-gate{gap:27px 12px}#driveline-app .test-buttons{gap:8px}#driveline-app .test-buttons button{font-size:11px;gap:7px;padding:10px}#driveline-app .stage{height:550px}}
-@media(max-width:760px){#driveline-app .topbar{height:65px;padding:0 16px}#driveline-app .brand b{font-size:13px}#driveline-app .brand div>span{font-size:10px}#driveline-app .header-right{gap:6px}#driveline-app .stage{height:530px}#driveline-app .scene-top{left:16px;right:16px;top:16px}#driveline-app .instruments{left:16px;top:79px;gap:14px}#driveline-app #speed{font-size:31px}#driveline-app .speed{min-width:90px}#driveline-app .rpm{padding-left:14px;width:92px}#driveline-app #rpm{font-size:22px}#driveline-app .gear-display{padding-left:14px}#driveline-app .scene-caption .eyebrow{font-size:8px}#driveline-app .view-modes button{padding:6px 10px}#driveline-app .parts-settings{top:148px;right:16px;width:145px}#driveline-app .slip-panel{left:16px;bottom:113px;width:195px;padding:10px 12px}#driveline-app .camera-strip{bottom:47px;width:calc(100% - 28px);max-width:450px;display:grid;grid-template-columns:repeat(4,1fr)}#driveline-app .camera-strip button{padding:4px 8px;font-size:11px}#driveline-app .scene-bottom{left:16px;right:16px;font-size:9px}#driveline-app .status-line{padding:8px 16px}#driveline-app #phase{display:none}#driveline-app .cockpit{grid-template-columns:1fr 1.1fr;gap:20px;padding:20px 16px}#driveline-app .ignition-controls{grid-column:1;grid-row:1}#driveline-app .shifter{grid-column:2;grid-row:1}#driveline-app .pedals{grid-row:2;grid-column:1/3;border:0;border-top:1px solid #28333f;padding:20px 0 0;gap:18px}#driveline-app .pedal>div:first-child{margin-bottom:8px}#driveline-app .verification{padding:18px 16px}#driveline-app .verification-heading .eyebrow{display:none}#driveline-app .test-buttons{grid-template-columns:repeat(2,1fr)}#driveline-app .test-buttons button{min-height:44px}#driveline-app footer{padding:14px 16px;font-size:8px}#driveline-app footer>span:last-child{display:none}#driveline-app #pause-overlay{top:240px;font-size:11px;padding:7px 10px}#driveline-app .pedal-ends{font-size:9px}}
+@media(max-width:760px){#driveline-app .topbar{height:65px;padding:0 16px}#driveline-app .brand b{font-size:13px}#driveline-app .brand div>span{font-size:10px}#driveline-app .header-right{gap:6px}#driveline-app .stage{height:530px}#driveline-app .scene-top{left:16px;right:16px;top:16px}#driveline-app .instruments{left:16px;top:79px;gap:14px}#driveline-app #speed{font-size:31px}#driveline-app .speed{min-width:90px}#driveline-app .rpm{padding-left:14px;width:92px}#driveline-app #rpm{font-size:22px}#driveline-app .gear-display{padding-left:14px}#driveline-app .scene-caption .eyebrow{font-size:8px}#driveline-app .view-modes button{padding:6px 10px}#driveline-app .parts-settings{top:148px;right:16px;width:145px}#driveline-app .slip-panel{left:16px;bottom:113px;width:195px;padding:10px 12px}#driveline-app .scene-bottom{left:16px;right:16px;font-size:9px}#driveline-app .status-line{padding:8px 16px}#driveline-app #phase{display:none}#driveline-app .cockpit{grid-template-columns:1fr 1.1fr;gap:20px;padding:20px 16px}#driveline-app .ignition-controls{grid-column:1;grid-row:1}#driveline-app .shifter{grid-column:2;grid-row:1}#driveline-app .pedals{grid-row:2;grid-column:1/3;border:0;border-top:1px solid #28333f;padding:20px 0 0;gap:18px}#driveline-app .pedal>div:first-child{margin-bottom:8px}#driveline-app .verification{padding:18px 16px}#driveline-app .verification-heading .eyebrow{display:none}#driveline-app .test-buttons{grid-template-columns:repeat(2,1fr)}#driveline-app .test-buttons button{min-height:44px}#driveline-app footer{padding:14px 16px;font-size:8px}#driveline-app footer>span:last-child{display:none}#driveline-app #pause-overlay{top:240px;font-size:11px;padding:7px 10px}#driveline-app .pedal-ends{font-size:9px}}
 
 /* Shared V8 telemetry is below the viewport, keeping the mechanism unobstructed. */
 #driveline-app .telemetry-row{display:grid;grid-template-columns:1fr 1fr;gap:32px;padding:15px 30px;border-bottom:1px solid var(--line);background:#0e1721}
@@ -24,7 +25,6 @@
 #driveline-app .settings-inner input[type=checkbox]{accent-color:var(--teal)}
 #driveline-app #cylinder-panel{position:absolute;left:30px;top:173px;display:flex;flex-direction:column;gap:3px;pointer-events:none;font-size:12px;text-shadow:0 2px 5px #09121e}
 #driveline-app #cylinder-panel span{font-size:11px;color:#a5b9c9}
-#driveline-app .camera-strip{flex-wrap:wrap;justify-content:center;width:max-content}
 #driveline-app .transport{flex-wrap:wrap}
 @media(max-width:760px){
  #driveline-app .telemetry-row{gap:16px;padding:14px 16px;grid-template-columns:1fr 1fr}
@@ -34,32 +34,44 @@
  #driveline-app .shaft-rpms{flex-wrap:wrap;gap:4px 12px;font-size:10px}
  #driveline-app .parts-settings{padding:0 16px}#driveline-app .settings-inner{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
  #driveline-app #cylinder-panel{left:16px;top:155px}
- #driveline-app .camera-strip{grid-template-columns:repeat(5,1fr);width:calc(100% - 28px);max-width:510px;gap:1px}
- #driveline-app .camera-strip button{min-height:38px;padding:6px 3px;font-size:11px}
  #driveline-app .pedals{gap:12px}#driveline-app .pedal input{height:44px}
  #driveline-app .settings-inner label{min-height:34px}
  #driveline-app .settings-inner select{font-size:16px;width:100%}
  #driveline-app .settings-inner input[type=range]{height:30px}
 }
 @media(max-width:390px){#driveline-app .telemetry-row{grid-template-columns:1fr;gap:14px}#driveline-app .turbo-panel{border-top:1px solid var(--line);padding-top:12px}#driveline-app .cockpit{grid-template-columns:1fr 1fr;gap:12px}#driveline-app .h-gate{gap:27px 7px}#driveline-app .header-right .quiet{padding:7px 8px}#driveline-app .brand-icon{display:none}}
-@media(pointer:coarse){#driveline-app .camera-strip button{min-height:44px}#driveline-app .view-modes button{min-height:38px}}
+@media(pointer:coarse){#driveline-app .view-modes button{min-height:38px}}
 
 /* Driving tools and acceleration results. */
 #driveline-app .header-right select{font-size:12px;max-width:140px}
 #driveline-app #race-start{background:#285b53;border-color:#4e8d80;color:#e2fff5}
-#driveline-app .camera-menu{position:absolute;right:20px;bottom:16px;z-index:8;font-size:12px}
-#driveline-app .camera-menu>summary{list-style:none;display:flex;gap:6px;align-items:center;min-height:40px;padding:9px 14px;background:#152330;border:1px solid #415666;border-radius:7px}
-#driveline-app .camera-menu>summary::after{content:'⌃';margin-left:8px;color:#86b9ae}
-#driveline-app .camera-menu[open]>summary::after{content:'⌄'}
-#driveline-app .camera-menu>summary::-webkit-details-marker{display:none}
-#driveline-app .camera-menu .camera-strip{position:absolute;left:auto;right:0;bottom:calc(100% + 8px);transform:none;width:330px;max-width:calc(100vw - 32px);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding:7px;gap:4px;background:#101c28}
-#driveline-app .camera-menu .camera-strip button{min-height:44px;padding:7px 3px;white-space:nowrap}
+#driveline-app .camera-menu{
+ position:absolute;right:20px;bottom:16px;z-index:3;display:flex;align-items:center;gap:6px;
+ min-height:40px;padding:9px 14px;background:#152330;border-color:#415666;font-size:12px
+}
+#driveline-app .camera-menu::after{content:'⌃';color:#86b9ae;flex:none}
+#driveline-app .camera-menu[aria-expanded=true]::after{content:'⌄'}
+#driveline-app #camera-name{min-width:0;overflow:hidden;text-overflow:ellipsis}
+#driveline-app .camera-strip{
+ position:absolute;right:20px;bottom:64px;z-index:4;display:grid;
+ grid-template-columns:repeat(5,minmax(0,1fr));width:344px;max-width:calc(100% - 28px);
+ max-height:calc(100% - 72px);overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;
+ padding:7px;gap:4px;background:#101c28;border:1px solid #415666;border-radius:8px
+}
+#driveline-app .camera-strip button{min-height:44px;padding:6px 3px;font-size:11px;white-space:normal}
+#driveline-app #enter-fullscreen{grid-column:1/-1;background:#223748;border:1px solid #557485;color:#edf6f4;font-size:13px}
+#driveline-app #enter-fullscreen:hover{background:#304c5d}
+#driveline-app #exit-fullscreen{
+ position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px));
+ z-index:10;display:grid;place-items:center;width:44px;height:44px;padding:0;
+ font-size:26px;line-height:1;background:#13212de8;border-color:#557485;color:#edf6f4
+}
 #driveline-app .inspection-heading{display:flex;align-items:center;gap:8px;padding:12px 30px;border-top:1px solid var(--line)}
 #driveline-app .inspection-heading b{margin-right:auto;font-weight:500}
 #driveline-app .inspection-heading button{font-size:12px}
 #driveline-app #mobile-help,#driveline-app .mobile-time-setting,#driveline-app .touch-left,#driveline-app .touch-right{display:none}
 #driveline-app[data-panel=false] .inspection-panel{display:none}
-#driveline-app .race-hud{position:absolute;bottom:70px;left:30px;width:330px;padding:9px 12px;background:#101c28eb;border-radius:8px;pointer-events:none}
+#driveline-app .race-hud{position:absolute;bottom:70px;left:30px;width:330px;padding:9px 12px;background:#101c28eb;border-radius:8px;pointer-events:none;z-index:2}
 #driveline-app .race-line{display:flex;align-items:center;gap:9px;font-size:11px;margin-bottom:7px}
 #driveline-app #race-state{color:#b9dfd5;flex:1}
 #driveline-app #race-clock{font:16px ui-monospace,monospace}
@@ -100,26 +112,59 @@
 #driveline-app[data-mobile=true] .header-right button,#driveline-app[data-mobile=true] .header-right select{font-size:12px;padding:7px 8px;min-height:40px}
 #driveline-app[data-mobile=true] .header-right select{width:98px;min-width:0}
 #driveline-app[data-mobile=true] #race-start{padding:7px 6px}
-#driveline-app[data-mobile=true] .stage{grid-row:2;height:auto;min-height:0;width:auto;position:relative}
-#driveline-app[data-mobile=true] .scene-top{left:8px;right:auto;top:8px}
-#driveline-app[data-mobile=true] .scene-caption{display:none}
-#driveline-app[data-mobile=true] .view-modes{padding:2px;gap:0}
-#driveline-app[data-mobile=true] .view-modes button{font-size:11px;padding:7px 10px;min-height:40px}
-#driveline-app[data-mobile=true] .camera-menu{right:8px;top:8px;bottom:auto;font-size:11px;max-width:calc(100% - 145px)}
-#driveline-app[data-mobile=true] .camera-menu>summary{padding:8px 9px;min-height:46px;gap:3px}
-#driveline-app[data-mobile=true] .camera-menu>summary::after{margin-left:2px}
-#driveline-app[data-mobile=true] .camera-menu .camera-strip{top:calc(100% + 7px);bottom:auto;width:292px;max-width:calc(100vw - 24px)}
-#driveline-app[data-mobile=true] .instruments{left:12px;top:64px;right:12px;gap:12px;justify-content:flex-start}
-#driveline-app[data-mobile=true] #speed{font-size:29px}
-#driveline-app[data-mobile=true] .speed{min-width:84px}
-#driveline-app[data-mobile=true] .rpm{padding-left:12px;width:84px}
-#driveline-app[data-mobile=true] #rpm{font-size:21px}
-#driveline-app[data-mobile=true] .gear-display{padding-left:12px}
-#driveline-app[data-mobile=true] #gear{font-size:26px}
-#driveline-app[data-mobile=true] .instruments small,#driveline-app[data-mobile=true] .instruments label{font-size:10px}
+/* Tools, gauges and viewport share tracks; popup controls are clipped to the viewport. */
+#driveline-app[data-mobile=true] .stage{
+ grid-row:2;height:auto;min-height:0;min-width:0;width:auto;
+ display:grid;grid-template-columns:minmax(0,1fr) minmax(94px,108px);
+ grid-template-rows:auto auto minmax(0,1fr);gap:5px 6px;padding:6px 8px 0
+}
+#driveline-app[data-mobile=true] .scene-top{
+ position:static;grid-area:1/1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ width:auto;min-width:0;gap:5px;pointer-events:auto
+}
+#driveline-app[data-mobile=true] .scene-caption,#driveline-app[data-mobile=true] .view-modes{display:none}
+#driveline-app[data-mobile=true] #mobile-view-mode{display:block}
+#driveline-app[data-mobile=true] #mobile-view-mode,#driveline-app[data-mobile=true] #ground-mode{
+ position:static;width:100%;max-width:none;min-width:0;padding:6px 4px;
+ font-size:12px;min-height:44px;text-overflow:ellipsis;background:#13212d
+}
+#driveline-app[data-mobile=true] .camera-menu{
+ position:static;grid-area:1/2;min-width:0;height:44px;justify-content:space-between;
+ padding:6px 7px;gap:4px;font-size:11px
+}
+#driveline-app[data-mobile=true] .instruments{
+ position:static;grid-area:2/1/3/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 50px;
+ gap:0;padding:6px 8px;align-items:stretch;font-variant-numeric:tabular-nums;
+ container-type:inline-size
+}
+#driveline-app[data-mobile=true] .instruments .instrument-reading{
+ display:flex;align-items:baseline;gap:4px;white-space:nowrap
+}
+#driveline-app[data-mobile=true] .speed{min-width:0}
+#driveline-app[data-mobile=true] .speed small,#driveline-app[data-mobile=true] .rpm small{margin:0}
+#driveline-app[data-mobile=true] .rpm{
+ width:auto;min-width:0;padding:0 5px;border-left:1px solid #33414f;box-sizing:border-box;text-align:center
+}
+#driveline-app[data-mobile=true] .rpm .instrument-reading{justify-content:center}
+#driveline-app[data-mobile=true] .gear-display{align-items:flex-end;padding-left:5px}
+#driveline-app[data-mobile=true] .gear-display small{letter-spacing:1px}
+#driveline-app[data-mobile=true] #speed,#driveline-app[data-mobile=true] #rpm,#driveline-app[data-mobile=true] #gear{
+ font-family:ui-monospace,monospace;font-size:21px;line-height:1.1;letter-spacing:-.5px
+}
+#driveline-app[data-mobile=true] #gear{order:-1}
+#driveline-app[data-mobile=true] .instruments small,#driveline-app[data-mobile=true] .instruments label{
+ color:#bdcdd8;font-size:10px;line-height:1.2
+}
+#driveline-app[data-mobile=true] .instruments label{margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#driveline-app[data-mobile=true] .rpm-track{margin:3px 0}
+#driveline-app[data-mobile=true] .scene-frame{position:relative;inset:auto;grid-area:3/1/4/-1;overflow:hidden;border-radius:7px}
+#driveline-app[data-mobile=true] .camera-strip{
+ top:3px;right:3px;bottom:auto;width:334px;max-width:calc(100% - 6px);max-height:calc(100% - 6px)
+}
 #driveline-app[data-mobile=true] .scene-bottom{display:none}
-#driveline-app[data-mobile=true] #pause-overlay{top:52%;font-size:11px;padding:7px 10px}
-#driveline-app[data-mobile=true] #cylinder-panel{left:12px;top:124px}
+#driveline-app[data-mobile=true] #pause-overlay{top:50%;font-size:11px;padding:7px 10px}
+#driveline-app[data-mobile=true] #cylinder-panel{left:8px;top:8px}
+#driveline-app[data-mobile=true] #clutch-detail{bottom:4px;left:8px;right:8px;max-width:none;font-size:11px;padding:5px 7px}
 #driveline-app[data-mobile=true] .status-line{grid-row:3;min-height:0;overflow:hidden;padding:3px 12px;font-size:11px;gap:6px}
 #driveline-app[data-mobile=true] #status{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #driveline-app[data-mobile=true] #phase{display:none}
@@ -136,7 +181,7 @@
 #driveline-app[data-mobile=true] .h-gate button{font-size:16px;min-height:44px;touch-action:manipulation}
 #driveline-app[data-mobile=true] .touch-left{grid-area:left;display:block;min-height:0}
 #driveline-app[data-mobile=true] .touch-right{grid-area:right;display:grid;grid-template-columns:1fr 1fr;gap:10px;min-height:0}
-#driveline-app[data-mobile=true] .race-hud{left:8px;right:8px;bottom:8px;width:auto;padding:7px 10px;max-width:410px;margin:auto}
+#driveline-app[data-mobile=true] .race-hud{position:static;grid-area:4/1/5/-1;width:auto;min-width:0;padding:5px 8px}
 #driveline-app[data-mobile=true] .race-line{margin-bottom:4px;gap:6px}
 #driveline-app[data-mobile=true] .race-splits b{font-size:16px}
 #driveline-app[data-mobile=true] .race-splits small{font-size:10px}
@@ -164,15 +209,15 @@
 #driveline-app[data-mobile=true][data-landscape=true] .cockpit{position:absolute;top:44px;bottom:24px;left:0;right:0;grid-template-columns:96px minmax(0,1fr) 188px;grid-template-rows:94px minmax(0,1fr);grid-template-areas:'tools . shifter' 'left . right';gap:8px;padding:8px 6px;background:transparent;border:0;pointer-events:none}
 #driveline-app[data-mobile=true][data-landscape=true] .cockpit>*{pointer-events:auto}
 #driveline-app[data-mobile=true][data-landscape=true] .inspection-panel{top:44px}
-#driveline-app[data-mobile=true][data-landscape=true] .instruments{top:59px;left:8px;right:8px;gap:7px}
-#driveline-app[data-mobile=true][data-landscape=true] .speed{min-width:77px}
-#driveline-app[data-mobile=true][data-landscape=true] #speed{font-size:25px}
-#driveline-app[data-mobile=true][data-landscape=true] .rpm{padding-left:8px;width:74px}
-#driveline-app[data-mobile=true][data-landscape=true] #rpm{font-size:18px}
-#driveline-app[data-mobile=true][data-landscape=true] .gear-display{padding-left:8px}
-#driveline-app[data-mobile=true][data-landscape=true] .view-modes button{padding:7px 7px}
-#driveline-app[data-mobile=true][data-landscape=true] .camera-menu{max-width:calc(100% - 121px)}
-#driveline-app[data-mobile=true][data-landscape=true] .camera-menu .camera-strip{width:260px;max-width:calc(100vw - 330px)}
+#driveline-app[data-mobile=true][data-landscape=true] .stage{padding-top:4px;row-gap:4px}
+#driveline-app[data-mobile=true][data-landscape=true] .instruments{padding-block:4px;align-items:center}
+#driveline-app[data-mobile=true][data-landscape=true] .gear-display{flex-direction:row;align-items:baseline;gap:5px;justify-content:flex-end}
+#driveline-app[data-mobile=true][data-landscape=true] #gear{order:0}
+#driveline-app[data-mobile=true][data-landscape=true] #speed,
+#driveline-app[data-mobile=true][data-landscape=true] #rpm,
+#driveline-app[data-mobile=true][data-landscape=true] #gear{font-size:18px}
+#driveline-app[data-mobile=true][data-landscape=true] .instruments label,
+#driveline-app[data-mobile=true][data-landscape=true] .rpm-track{display:none}
 #driveline-app[data-mobile=true][data-landscape=true] .race-hud{padding:6px 8px;bottom:6px}
 #driveline-app[data-mobile=true][data-landscape=true] .race-line{font-size:10px;gap:4px}
 #driveline-app[data-mobile=true][data-landscape=true] #race-valid{font-size:9px}
@@ -182,22 +227,23 @@
 @media(max-height:360px){#driveline-app[data-mobile=true][data-landscape=true] .touch-pedal{gap:3px;padding:4px}#driveline-app[data-mobile=true][data-landscape=true] .touch-pedal small{display:none}#driveline-app[data-mobile=true][data-landscape=true] .touch-pedal b{font-size:17px}}
 #driveline-app[data-mobile=true][data-landscape=true] .cockpit{grid-row:auto;grid-column:auto}
 #driveline-app[data-mobile=true]{box-sizing:border-box}
-#driveline-app[data-mobile=true] #scene{top:128px}
-#driveline-app[data-mobile=true][data-challenge=true] #scene{bottom:92px}
-#driveline-app[data-mobile=true] .view-modes button{min-width:44px;min-height:44px}
-#driveline-app[data-mobile=true][data-landscape=true] #scene{top:108px}
-#driveline-app[data-mobile=true][data-landscape=true][data-challenge=true] #scene{bottom:82px}
-#driveline-app[data-mobile=true][data-landscape=true] .instruments label,#driveline-app[data-mobile=true][data-landscape=true] .rpm-track{display:none}
 #driveline-app[data-mobile=true][data-landscape=true] .cockpit{top:calc(44px + env(safe-area-inset-top,0px));bottom:calc(24px + env(safe-area-inset-bottom,0px));left:env(safe-area-inset-left,0px);right:env(safe-area-inset-right,0px)}
 #driveline-app[data-mobile=true] .inspection-panel{top:calc(48px + env(safe-area-inset-top,0px))}
 #driveline-app[data-mobile=true][data-landscape=true] .inspection-panel{top:calc(44px + env(safe-area-inset-top,0px))}
 @media(max-height:650px){
  #driveline-app[data-mobile=true][data-landscape=false]{grid-template-rows:48px minmax(0,1fr) 24px 200px}
- #driveline-app[data-mobile=true][data-landscape=false] .instruments{top:58px}
- #driveline-app[data-mobile=true][data-landscape=false] .instruments label,#driveline-app[data-mobile=true][data-landscape=false] .rpm-track{display:none}
- #driveline-app[data-mobile=true][data-landscape=false] #scene{top:108px}
- #driveline-app[data-mobile=true][data-landscape=false][data-challenge=true] #scene{bottom:78px}
+ #driveline-app[data-mobile=true][data-landscape=false] .instruments label,
+ #driveline-app[data-mobile=true][data-landscape=false] .rpm-track{display:none}
  #driveline-app[data-mobile=true][data-landscape=false] .race-splits span{display:none}
+}
+@media(max-width:650px){
+ #driveline-app[data-mobile=true][data-landscape=true] .stage{margin-left:80px;margin-right:164px}
+ #driveline-app[data-mobile=true][data-landscape=true] .cockpit{grid-template-columns:68px minmax(0,1fr) 152px}
+ #driveline-app[data-mobile=true][data-landscape=true] .race-splits span{display:none}
+}
+@container(max-width:255px){
+ #driveline-app[data-mobile=true] .instruments .instrument-reading{gap:3px;letter-spacing:-.3px}
+ #driveline-app[data-mobile=true] .instruments #speed,#driveline-app[data-mobile=true] .instruments #rpm{font-size:16px}
 }
 
 /* Four observation modes and independent scenery, shared by desktop/mobile. */
@@ -209,24 +255,18 @@
 #driveline-app #clutch-detail{position:absolute;bottom:16px;left:30px;max-width:calc(100% - 230px);padding:7px 10px;background:#13212de8;color:#dce9ec;border-radius:6px;font-size:12px;pointer-events:none}
 #driveline-app #clutch-detail:not([hidden])~.scene-bottom{display:none}
 #driveline-app .scene-bottom{color:#e0e9ed;text-shadow:0 1px 3px #17232b}
-#driveline-app[data-mobile=true] .scene-top{width:calc(100% - 128px);gap:5px;right:auto}
-#driveline-app[data-mobile=true] .view-modes{display:none}
-#driveline-app[data-mobile=true] #mobile-view-mode{display:block;pointer-events:auto;min-width:0;flex:1}
-#driveline-app[data-mobile=true] #mobile-view-mode,#driveline-app[data-mobile=true] #ground-mode{font-size:12px;padding:7px 3px;min-height:44px;max-width:50%;background:#13212d}
-#driveline-app[data-mobile=true] .camera-menu{width:108px;max-width:108px}
-#driveline-app[data-mobile=true] .camera-menu>summary{min-height:44px;white-space:nowrap;font-size:11px;padding:7px 5px;overflow:hidden}
-#driveline-app[data-mobile=true] .instruments{padding:7px 10px;gap:12px;right:auto;max-width:calc(100% - 24px)}
-#driveline-app[data-mobile=true] #clutch-detail{bottom:4px;left:8px;right:8px;max-width:none;font-size:11px;padding:5px 7px}
-#driveline-app[data-mobile=true][data-landscape=true] .scene-top{width:calc(100% - 122px)}
-#driveline-app[data-mobile=true][data-landscape=true] .camera-menu{width:102px;max-width:102px}
-#driveline-app[data-mobile=true][data-landscape=true] .instruments{padding:4px 7px;gap:7px}
-@media(max-width:650px){
- #driveline-app[data-mobile=true][data-landscape=true] .stage{margin-left:80px;margin-right:164px}
- #driveline-app[data-mobile=true][data-landscape=true] .cockpit{grid-template-columns:68px minmax(0,1fr) 152px}
- #driveline-app[data-mobile=true][data-landscape=true] .scene-top{width:calc(100% - 16px)}
- #driveline-app[data-mobile=true][data-landscape=true] .camera-menu{top:auto;bottom:5px;right:6px}
- #driveline-app[data-mobile=true][data-landscape=true] .camera-menu .camera-strip{top:auto;bottom:calc(100% + 5px);max-width:calc(100vw - 256px)}
+
+/* Page fill also works inside a preview that denies browser fullscreen. */
+html:has(#driveline-app[data-fullscreen=true]){overflow:hidden}
+#driveline-app[data-fullscreen=true] > :not(.stage),
+#driveline-app[data-fullscreen=true] .stage > :not(.scene-frame){visibility:hidden}
+#driveline-app[data-fullscreen=true],
+#driveline-app[data-fullscreen=true] .stage{overflow:visible}
+#driveline-app[data-fullscreen=true] .scene-frame{
+ position:fixed;inset:0;width:100%;height:100%;height:100dvh;z-index:100;visibility:visible;overflow:hidden;
+ margin:0;border-radius:0;background:#101923
 }
+#driveline-app[data-fullscreen=true] .scene-frame > :not(#scene):not(#exit-fullscreen){display:none}
 
 /* Paint choices sit in the existing collapsible panel, clear of the 3D canvas. */
 #driveline-app .paint-settings{padding:16px 30px;border-bottom:1px solid var(--line);background:#0e1721}
@@ -245,16 +285,24 @@
 <div id="driveline-app">
 <header class="topbar"><div class="brand"><span class="brand-icon">D<span>∕</span></span><div><b>DRIVELINE</b><span>手排動力實驗室</span></div></div><div class="header-right"><span class="build-label">AUREL R8 <i>·</i> RR / 6MT</span><select id="play-mode" aria-label="遊玩模式"><option value="free">自由駕駛</option><option value="challenge">加速挑戰</option></select><button id="race-start" hidden>開始挑戰</button><button id="more-toggle" aria-controls="inspection-panel" aria-expanded="false">面板</button><button id="help-toggle" class="quiet">操作說明</button><button id="reset" class="quiet">重置</button></div></header>
 <section class="stage" aria-label="可旋轉縮放的 3D 動力系統">
-<div id="scene"></div><div id="load-message">正在組裝 V8 與手排動力系統…</div>
 <div class="scene-top"><div class="scene-caption"><span class="eyebrow">REAR ENGINE / REAR DRIVE</span><span id="view-label">AUREL R8 · 後置後驅</span></div><div class="view-modes" aria-label="顯示模式"><button data-mode="full" class="selected">完整車輛</button><button data-mode="bodyglass">車殼透明</button><button data-mode="transparent">機構透明</button><button data-mode="exploded">拆解</button></div><select id="mobile-view-mode" aria-label="觀察模式"><option value="full">完整車輛</option><option value="bodyglass">車殼透明</option><option value="transparent">機構透明</option><option value="exploded">拆解</option></select><select id="ground-mode" aria-label="地面模式"><option value="grassland">草原公路</option><option value="grid">網格地面</option></select></div>
-<div class="instruments"><div class="speed"><span id="speed">0.0</span><small>km/h</small><label id="direction">靜止</label></div><div class="rpm"><div><span id="rpm">0</span><small>rpm</small></div><div class="rpm-track"><i id="rpm-bar"></i></div><label id="engine-state">引擎關閉</label></div><div class="gear-display"><small>GEAR</small><b id="gear">N</b></div></div>
-<details id="camera-menu" class="camera-menu"><summary>特寫 · <span id="camera-name">總覽</span></summary><div class="camera-strip" aria-label="攝影機特寫"><button data-camera="overview" class="selected">總覽</button><button data-camera="pistons">活塞</button><button data-camera="valves">汽門</button><button data-camera="timing">正時</button><button data-camera="turbo">渦輪</button><button data-camera="airflow">氣流</button><button data-camera="clutch">離合器</button><button data-camera="synchro">同步器</button><button data-camera="reverse">倒檔</button><button data-camera="final">終傳</button><button data-camera="exhaust">排氣管</button><button data-camera="rearaxle">後輪軸</button><button data-camera="frontsuspension">前懸吊</button><button data-camera="frontaxle">前輪橫軸</button></div></details>
-<div id="race-hud" class="race-hud" hidden aria-label="加速挑戰計時"><div class="race-line"><span id="race-state" role="status">準備挑戰</span><b id="race-clock">0.00 s</b><span id="race-valid">正式紀錄</span></div><div class="race-splits"><div><small>0–100</small><b id="race-100">—</b><span id="delta-100"></span></div><div><small>0–200</small><b id="race-200">—</b><span id="delta-200"></span></div><div><small>0–300 km/h</small><b id="race-300">—</b><span id="delta-300"></span></div></div></div>
+<button type="button" id="camera-menu" class="camera-menu" aria-controls="camera-strip" aria-expanded="false"><span>特寫</span><span id="camera-name">總覽</span></button>
+<div class="instruments" aria-label="車速、轉速與目前檔位"><div class="speed"><div class="instrument-reading"><span id="speed">0.0</span><small>km/h</small></div><label id="direction">靜止</label></div><div class="rpm"><div class="instrument-reading"><span id="rpm">0</span><small>rpm</small></div><div class="rpm-track"><i id="rpm-bar"></i></div><label id="engine-state">引擎關閉</label></div><div class="gear-display"><small>GEAR</small><b id="gear">N</b></div></div>
+<div id="scene-frame" class="scene-frame">
+<div id="scene"></div>
+<button type="button" id="exit-fullscreen" aria-label="退出全螢幕" hidden>×</button>
+<div id="load-message">正在組裝 V8 與手排動力系統…</div>
+<div id="camera-strip" class="camera-strip" role="group" aria-label="攝影機特寫" hidden>
+<button type="button" id="enter-fullscreen">全螢幕</button>
+<button data-camera="overview" class="selected">總覽</button><button data-camera="pistons">活塞</button><button data-camera="valves">汽門</button><button data-camera="timing">正時</button><button data-camera="turbo">渦輪</button><button data-camera="airflow">氣流</button><button data-camera="clutch">離合器</button><button data-camera="synchro">同步器</button><button data-camera="reverse">倒檔</button><button data-camera="final">終傳</button><button data-camera="exhaust">排氣管</button><button data-camera="rearaxle">後輪軸</button><button data-camera="frontsuspension">前懸吊</button><button data-camera="frontaxle">前輪橫軸</button>
+</div>
 <div id="cylinder-panel" hidden><b id="cylinder-detail"></b><span id="valve-detail"></span></div>
 <div id="clutch-detail" hidden></div>
 <div id="front-axle-detail" hidden>橫向前軸 → 主銷輪架 → 軸承 → 兩側輪轂 · 前輪從動</div>
 <div id="pause-overlay" hidden aria-hidden="true"></div>
 <div class="scene-bottom"><span>拖曳旋轉 · 滾輪縮放 · 雙指平移</span><span id="distance">0.0 m</span></div>
+</div>
+<div id="race-hud" class="race-hud" hidden aria-label="加速挑戰計時"><div class="race-line"><span id="race-state" role="status">準備挑戰</span><b id="race-clock">0.00 s</b><span id="race-valid">正式紀錄</span></div><div class="race-splits"><div><small>0–100</small><b id="race-100">—</b><span id="delta-100"></span></div><div><small>0–200</small><b id="race-200">—</b><span id="delta-200"></span></div><div><small>0–300 km/h</small><b id="race-300">—</b><span id="delta-300"></span></div></div></div>
 </section>
 <div class="status-line"><span id="status-dot"></span><span id="simulation-state" role="status" hidden></span><span id="status" role="status">踩住離合器，按「啟動」開始。</span><span id="phase">待命</span></div>
 <section class="cockpit" aria-label="駕駛控制">
@@ -7584,6 +7632,9 @@ function createTouchPedals(elements,{enabled,read,write,onInteract}){
 
 function startDriveline(root){
  const $=id=>root.querySelector('#'+id),$$=sel=>[...root.querySelectorAll(sel)];
+ const sceneFrame=$('scene-frame'),cameraMenu=$('camera-menu'),cameraStrip=$('camera-strip');
+ const enterFullscreenButton=$('enter-fullscreen'),exitFullscreenButton=$('exit-fullscreen');
+ const viewingFullscreen=()=>root.dataset.fullscreen==='true';
  const sim=new Drivetrain();const view={mode:'full',e:0,targetE:0,paused:false,scale:1,camera:'overview',op:[1,1,1],targetOp:[1,1,1]};
  let storage=null;try{storage=window.localStorage;}catch{}
  const race=new AccelerationChallenge(storage);let touch=null,mobile=false,playMode='free',releaseDriver=false;
@@ -7617,8 +7668,8 @@ function startDriveline(root){
  const engineCameras=['pistons','valves','timing','turbo','airflow'];
  for(const k of engineCameras)presets[k]=engine.cameraPreset(k);
  for(const k of ['synchro','reverse'])presets[k]={pos:trans.root.localToWorld(trans.presets[k].pos.clone()),target:trans.root.localToWorld(trans.presets[k].target.clone())};
- let cameraFlight=null;
- function cameraTo(k,instant=false){let p=engineCameras.includes(k)?engine.cameraPreset(k):presets[k];if(!p)return;if(k==='synchro'){const g=sim.s.shift.to!=='N'?sim.s.shift.to:sim.s.gear;const x=['1','2'].includes(g)?1.34:['5','6'].includes(g)?-1.24:.06;const offset=new THREE.Vector3((x+.55)*.62*CAR.powerScale,0,0);p={pos:p.pos.clone().add(offset),target:p.target.clone().add(offset)};}view.camera=k;if(k==='frontaxle')$('front-hub-inspection').checked=true;const pos=p.pos.clone();
+ let cameraFlight=null,followCameraPreset=true;
+ function cameraTo(k,instant=false){let p=engineCameras.includes(k)?engine.cameraPreset(k):presets[k];if(!p)return;followCameraPreset=!viewingFullscreen();if(k==='synchro'){const g=sim.s.shift.to!=='N'?sim.s.shift.to:sim.s.gear;const x=['1','2'].includes(g)?1.34:['5','6'].includes(g)?-1.24:.06;const offset=new THREE.Vector3((x+.55)*.62*CAR.powerScale,0,0);p={pos:p.pos.clone().add(offset),target:p.target.clone().add(offset)};}view.camera=k;if(k==='frontaxle')$('front-hub-inspection').checked=true;const pos=p.pos.clone();
  if(k==='overview'){
   const direction=pos.clone().sub(p.target).normalize(),right=new THREE.Vector3().crossVectors(new THREE.Vector3(0,1,0),direction).normalize(),up=new THREE.Vector3().crossVectors(direction,right);
   const aspect=viewport.clientWidth/Math.max(1,viewport.clientHeight),tanY=Math.tan(camera.fov*Math.PI/360)*(mobile?.92:.82),tanX=Math.tan(camera.fov*Math.PI/360)*aspect*.90;
@@ -7627,9 +7678,19 @@ function startDriveline(root){
   pos.copy(p.target).addScaledVector(direction,Math.max(5,distance));
  }else if(mobile){const aspect=viewport.clientWidth/Math.max(1,viewport.clientHeight);pos.sub(p.target).multiplyScalar(Math.max(1,1/aspect)).add(p.target);}
  if(instant){camera.position.copy(pos);controls.target.copy(p.target);cameraFlight=null;}else cameraFlight={t:0,pos:camera.position.clone(),target:controls.target.clone(),end:pos,goal:p.target};$$('[data-camera]').forEach(b=>{b.classList.toggle('selected',b.dataset.camera===k);if(b.dataset.camera===k)$('camera-name').textContent=b.textContent;});$('view-label').textContent={overview:'AUREL R8 · 後置後驅',pistons:'滑塊曲柄 · 四行程',valves:'四凸輪軸 · 32 汽門',turbo:'雙渦輪 · 廢氣旁通閥',airflow:'進氣／排氣 · 原作流道',timing:'正時鏈條 · 2:1',clutch:'乾式單片離合器',synchro:'同步器與撥叉',reverse:'倒檔惰輪',final:'4.10 終傳 · 後輪驅動',exhaust:'連續排氣流 · 觸媒與消音器',rearaxle:'後輪 · 亮銀半軸／灰色 A 臂／深色車架',frontaxle:'前輪橫軸 · 非驅動整體前軸／兩側輪轂',frontsuspension:'前懸吊 · 定位臂、橫向定位桿與避震器'}[k];if(k!=='overview'&&['full','bodyglass'].includes(view.mode))setMode('transparent');}
- controls.addEventListener('start',()=>{cameraFlight=null;dismissPauseNotice();});
- function resize(){const w=Math.max(1,viewport.clientWidth),h=Math.max(1,viewport.clientHeight);camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);cameraTo(view.camera,true);}
- new ResizeObserver(resize).observe(viewport);resize();cameraTo('overview',true);
+ controls.addEventListener('start',()=>{cameraFlight=null;followCameraPreset=false;dismissPauseNotice();});
+ function resize(){
+  const w=Math.max(1,viewport.clientWidth),h=Math.max(1,viewport.clientHeight);
+  camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);
+  if(followCameraPreset&&!viewingFullscreen())cameraTo(view.camera,true);
+ }
+ new ResizeObserver(resize).observe(viewport);resize();
+ function setCameraMenu(open,restoreFocus=false){
+  cameraStrip.hidden=!open;
+  cameraMenu.setAttribute('aria-expanded',String(open));
+  if(restoreFocus)cameraMenu.focus({preventScroll:true});
+ }
+ cameraMenu.onclick=()=>setCameraMenu(cameraStrip.hidden);
  const frozen=()=>view.e>0||view.targetE>0;
  let noticeState='',noticeUntil=0;
  const pauseKind=()=>frozen()?'exploded':view.paused?'paused':'';
@@ -7647,7 +7708,7 @@ function startDriveline(root){
  function syncModels(){const opaque=['full','bodyglass'].includes(view.mode);engine.update(sim.s,view.e,view.op[0],opaque?{...engineSettings,cutaway:false,turboCutaway:false,headOpacity:1,turboOpacity:1,pipeOpacity:1,airflow:'off'}:engineSettings);trans.update(sim.s,view.e,view.op[2],view.op[1]);link.update(sim.s,view.e,opaque?1:.14,view.op[1]);vehicle.update(sim.s,view.e,view.mode,$('front-hub-inspection').checked);ground.update(sim.s,view.e);}
  function setMode(mode){if(mode==='exploded'&&!frozen()){race.practice('拆解觀察');syncModels();freezeSnapshot={physics:stateSignature(),models:modelSignature()};lastRestoration=null;}view.mode=mode;$('mobile-view-mode').value=mode;view.targetE=mode==='exploded'?1:0;view.targetOp=['full','bodyglass'].includes(mode)?[1,1,1]:mode==='exploded'?[.50,.4,.40]:['engine-opacity','clutch-opacity','trans-opacity'].map(id=>Number($(id).value)/100);$$('[data-mode]').forEach(b=>b.classList.toggle('selected',b.dataset.mode===mode));if(mode==='exploded'){touch?.releaseAll();cameraTo('overview');}}
  $('mobile-view-mode').onchange=()=>setMode($('mobile-view-mode').value);
- $$('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));$$('[data-camera]').forEach(b=>b.onclick=()=>{cameraTo(b.dataset.camera);dismissPauseNotice();if(mobile)$('camera-menu').open=false;});
+ $$('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));$$('[data-camera]').forEach(b=>b.onclick=()=>{cameraTo(b.dataset.camera);dismissPauseNotice();if(mobile)setCameraMenu(false,true);});
  ['engine-opacity','clutch-opacity','trans-opacity'].forEach((id,i)=>$(id).oninput=()=>{if(view.mode!=='transparent')setMode('transparent');view.targetOp[i]=+$(id).value/100;});
  function observeEngine(){
    engineSettings.cylinder=+$('cylinder-select').value;
@@ -7677,8 +7738,64 @@ function startDriveline(root){
  for(const name of ['clutch','brake','throttle']){$(name).oninput=()=>{cancelDemo();if(!frozen())sim.s[name]=+$(name).value/100;};}
  const held=new Set(),controlled=new Set(),mapping={KeyW:'throttle',ArrowUp:'throttle',KeyS:'brake',ArrowDown:'brake',KeyC:'clutch',ShiftLeft:'clutch',ShiftRight:'clutch'};
  const keyboardClutchReleaseRate=.63;
- root.addEventListener('pointerdown',()=>{root.dataset.focused='1';});
- window.addEventListener('keydown',e=>{if(!root.isConnected||$('help').open||(['SELECT','TEXTAREA'].includes(e.target.tagName)||e.target.isContentEditable||e.target.tagName==='INPUT'&&e.target.type!=='range'))return;const p=mapping[e.code];if(p){e.preventDefault();cancelDemo();held.add(e.code);controlled.add(p);return;}if(e.repeat)return;if(e.code==='KeyD'||e.code==='KeyA'){e.preventDefault();cancelDemo();if(!frozen())sim.requestSequential(e.code==='KeyD'?1:-1);}else if(e.code==='Enter')$('ignition').click();else if(e.code==='KeyP')$('pause').click();else if(/^Digit[1-6]$/.test(e.code)){cancelDemo();if(!frozen())sim.requestGear(e.code.slice(-1));}else if(e.code==='KeyN'||e.code==='KeyR'){cancelDemo();if(!frozen())sim.requestGear(e.code.slice(-1));}});
+ let nativeFullscreen=false;
+ function setFullscreenView(active){
+  if(viewingFullscreen()===active)return;
+  if(active){
+   setCameraMenu(false);
+   touch?.releaseAll();
+   held.clear();
+  }
+  followCameraPreset=false;
+  root.dataset.fullscreen=String(active);
+  exitFullscreenButton.hidden=!active;
+  resize();
+  (active?exitFullscreenButton:cameraMenu).focus({preventScroll:true});
+ }
+ async function enterFullscreen(){
+  if(viewingFullscreen())return;
+  setFullscreenView(true);
+  if(!document.fullscreenEnabled||typeof sceneFrame.requestFullscreen!=='function')return;
+  try{await sceneFrame.requestFullscreen();}catch{/* The canvas already fills the page. */}
+ }
+ async function leaveFullscreen(){
+  if(document.fullscreenElement===sceneFrame){
+   try{await document.exitFullscreen();}catch{/* The exit button remains available for another attempt. */}
+  }
+  if(document.fullscreenElement!==sceneFrame)setFullscreenView(false);
+ }
+ enterFullscreenButton.onclick=enterFullscreen;
+ exitFullscreenButton.onclick=leaveFullscreen;
+ document.addEventListener('fullscreenchange',()=>{
+  if(document.fullscreenElement===sceneFrame){
+   nativeFullscreen=true;
+   if(!viewingFullscreen())void leaveFullscreen();
+  }else if(nativeFullscreen){
+   nativeFullscreen=false;
+   setFullscreenView(false);
+  }
+ });
+ root.addEventListener('pointerdown',e=>{
+  root.dataset.focused='1';
+  if(!cameraStrip.hidden&&!cameraMenu.contains(e.target)&&!cameraStrip.contains(e.target))setCameraMenu(false);
+ });
+ window.addEventListener('keydown',e=>{
+  if(!root.isConnected||$('help').open)return;
+  if(e.key==='Escape'){
+   if(viewingFullscreen()){e.preventDefault();void leaveFullscreen();}
+   else if(!cameraStrip.hidden){e.preventDefault();setCameraMenu(false,true);}
+   else panel(false);
+   return;
+  }
+  if(viewingFullscreen()||['SELECT','TEXTAREA'].includes(e.target.tagName)||e.target.isContentEditable||e.target.tagName==='INPUT'&&e.target.type!=='range')return;
+  const p=mapping[e.code];
+  if(p){e.preventDefault();cancelDemo();held.add(e.code);controlled.add(p);return;}
+  if(e.repeat)return;
+  if(e.code==='KeyD'||e.code==='KeyA'){e.preventDefault();cancelDemo();if(!frozen())sim.requestSequential(e.code==='KeyD'?1:-1);}
+  else if(e.code==='Enter'){if(!['BUTTON','A','SUMMARY'].includes(e.target.tagName))$('ignition').click();}
+  else if(e.code==='KeyP')$('pause').click();
+  else if(/^Digit[1-6]$/.test(e.code)||e.code==='KeyN'||e.code==='KeyR'){cancelDemo();if(!frozen())sim.requestGear(e.code.slice(-1));}
+ });
  window.addEventListener('keyup',e=>held.delete(e.code));
  function interruptControls(){race.practice('切離畫面');touch?.releaseAll();held.clear();if(!frozen()){sim.s.throttle=0;sim.s.brake=0;}else releaseDriver=true;controlled.clear();}
  window.addEventListener('blur',interruptControls);document.addEventListener('visibilitychange',()=>{if(document.hidden)interruptControls();});
@@ -7686,7 +7803,6 @@ function startDriveline(root){
  function panel(open){root.dataset.panel=String(open);$('more-toggle').setAttribute('aria-expanded',String(open));}
  $('more-toggle').onclick=()=>panel(root.dataset.panel!=='true');$('panel-close').onclick=()=>panel(false);
  $('help-toggle').onclick=$('mobile-help').onclick=()=>{race.practice('操作說明');view.paused=true;touch.releaseAll();$('help').showModal();};$('help-close').onclick=()=>$('help').close();
- window.addEventListener('keydown',e=>{if(e.key==='Escape'){panel(false);$('camera-menu').open=false;}});
  $('play-mode').onchange=()=>{playMode=$('play-mode').value;if(playMode==='free')race.finish('返回自由駕駛');root.dataset.challenge=String(playMode==='challenge');updateRaceUI();};
  $('race-start').onclick=()=>{if(race.active){race.finish('手動結束');updateRaceUI();return;}reset();sim.ignition();sim.requestGear('1');race.arm(sim.s);panel(false);sim.notify('正在準備：自動啟動、掛入 1 檔，隨後倒數。');updateRaceUI();};
  const rpm=w=>w*30/Math.PI,fmt=n=>Math.round(n).toLocaleString('en-US');
