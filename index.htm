@@ -7737,7 +7737,7 @@ function startDriveline(root){
  $$('[data-gear]').forEach(b=>b.onclick=()=>{cancelDemo();if(!frozen())sim.requestGear(b.dataset.gear);});
  for(const name of ['clutch','brake','throttle']){$(name).oninput=()=>{cancelDemo();if(!frozen())sim.s[name]=+$(name).value/100;};}
  const held=new Set(),controlled=new Set(),mapping={KeyW:'throttle',ArrowUp:'throttle',KeyS:'brake',ArrowDown:'brake',KeyC:'clutch',ShiftLeft:'clutch',ShiftRight:'clutch'};
- const keyboardClutchReleaseRate=.63;
+ const keyboardClutchReleaseRate=2;
  let nativeFullscreen=false;
  function setFullscreenView(active){
   if(viewingFullscreen()===active)return;
@@ -7888,12 +7888,26 @@ function startDriveline(root){
  // Keep 480 integration ticks per real second, including at 0.01×.
  // A constant simulated tick would otherwise update the mechanism only 4.8 times/s.
  const fixedDt=P.step*Math.min(1,view.scale);
- acc+=dt*view.scale;while(acc>=fixedDt){if(demo&&!demo.wall)demoStep(fixedDt);if(!demo){for(const p of controlled){const down=[...held].some(k=>mapping[k]===p);const rate=p==='clutch'?(down?4:keyboardClutchReleaseRate):p==='throttle'?(down?1.2:2.5):4;sim.s[p]=Math.max(0,Math.min(1,sim.s[p]+(down?1:-1)*rate*fixedDt));if(!down&&sim.s[p]===0)controlled.delete(p);}}
- if(!frozen()){
-  if(releaseDriver){sim.s.throttle=0;sim.s.brake=0;releaseDriver=false;}touch.flush();if(race.phase==='preparing'){sim.s.clutch=1;sim.s.throttle=0;sim.s.brake=1;}
-  const before={time:sim.s.time,v:sim.s.v,distance:sim.s.distance},preparing=race.phase==='preparing';sim.step(fixedDt);race.step(before,sim.s);
-  if(preparing&&race.phase==='countdown'){sim.s.brake=0;sim.notify('倒數三秒：可預踩油門，保持離合器分離。');}
- }acc-=fixedDt;}
+ acc+=dt*view.scale;
+ while(acc>=fixedDt){
+  if(demo&&!demo.wall)demoStep(fixedDt);
+  if(!demo)for(const p of controlled){
+   const down=[...held].some(k=>mapping[k]===p);
+   const rate=p==='clutch'?(down?4:keyboardClutchReleaseRate):p==='throttle'?(down?1.2:2.5):4;
+   sim.s[p]=Math.max(0,Math.min(1,sim.s[p]+(down?1:-1)*rate*fixedDt));
+   // Round off the clutch's floating-point residue at the end of its release.
+   if(!down&&sim.s[p]<=(p==='clutch'?1e-12:0)){
+    sim.s[p]=0;
+    controlled.delete(p);
+   }
+  }
+  if(!frozen()){
+   if(releaseDriver){sim.s.throttle=0;sim.s.brake=0;releaseDriver=false;}touch.flush();if(race.phase==='preparing'){sim.s.clutch=1;sim.s.throttle=0;sim.s.brake=1;}
+   const before={time:sim.s.time,v:sim.s.v,distance:sim.s.distance},preparing=race.phase==='preparing';sim.step(fixedDt);race.step(before,sim.s);
+   if(preparing&&race.phase==='countdown'){sim.s.brake=0;sim.notify('倒數三秒：可預踩油門，保持離合器分離。');}
+  }
+  acc-=fixedDt;
+ }
  }else acc=0;
  if(cameraFlight){const f=cameraFlight;f.t=Math.min(1,f.t+dt*1.8);const t=f.t*f.t*(3-2*f.t);camera.position.lerpVectors(f.pos,f.end,t);controls.target.lerpVectors(f.target,f.goal,t);if(f.t===1)cameraFlight=null;}
  controls.update();syncModels();updatePauseNotice(now);renderer.render(scene,camera);uiTime+=dt;if(uiTime>.08){ui();uiTime=0;}renderCount++;if(renderCount===3)root.dataset.ready='true';
