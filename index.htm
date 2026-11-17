@@ -199,16 +199,45 @@
  #driveline-app[data-mobile=true][data-landscape=false][data-challenge=true] #scene{bottom:78px}
  #driveline-app[data-mobile=true][data-landscape=false] .race-splits span{display:none}
 }
+
+/* Four observation modes and independent scenery, shared by desktop/mobile. */
+#driveline-app .scene-top{gap:8px;align-items:center}
+#driveline-app .scene-caption{margin-right:auto;color:#ecf5f8;text-shadow:0 1px 5px #17232b}
+#driveline-app #ground-mode{pointer-events:auto;font-size:12px;min-height:40px;background:#13212deb}
+#driveline-app #mobile-view-mode{display:none}
+#driveline-app .instruments{background:#101c28e8;border:1px solid #415666;border-radius:8px;padding:12px 16px;gap:18px}
+#driveline-app #clutch-detail{position:absolute;bottom:16px;left:30px;max-width:calc(100% - 230px);padding:7px 10px;background:#13212de8;color:#dce9ec;border-radius:6px;font-size:12px;pointer-events:none}
+#driveline-app #clutch-detail:not([hidden])~.scene-bottom{display:none}
+#driveline-app .scene-bottom{color:#e0e9ed;text-shadow:0 1px 3px #17232b}
+#driveline-app[data-mobile=true] .scene-top{width:calc(100% - 128px);gap:5px;right:auto}
+#driveline-app[data-mobile=true] .view-modes{display:none}
+#driveline-app[data-mobile=true] #mobile-view-mode{display:block;pointer-events:auto;min-width:0;flex:1}
+#driveline-app[data-mobile=true] #mobile-view-mode,#driveline-app[data-mobile=true] #ground-mode{font-size:12px;padding:7px 3px;min-height:44px;max-width:50%;background:#13212d}
+#driveline-app[data-mobile=true] .camera-menu{width:108px;max-width:108px}
+#driveline-app[data-mobile=true] .camera-menu>summary{min-height:44px;white-space:nowrap;font-size:11px;padding:7px 5px;overflow:hidden}
+#driveline-app[data-mobile=true] .instruments{padding:7px 10px;gap:12px;right:auto;max-width:calc(100% - 24px)}
+#driveline-app[data-mobile=true] #clutch-detail{bottom:4px;left:8px;right:8px;max-width:none;font-size:11px;padding:5px 7px}
+#driveline-app[data-mobile=true][data-landscape=true] .scene-top{width:calc(100% - 122px)}
+#driveline-app[data-mobile=true][data-landscape=true] .camera-menu{width:102px;max-width:102px}
+#driveline-app[data-mobile=true][data-landscape=true] .instruments{padding:4px 7px;gap:7px}
+@media(max-width:650px){
+ #driveline-app[data-mobile=true][data-landscape=true] .stage{margin-left:80px;margin-right:164px}
+ #driveline-app[data-mobile=true][data-landscape=true] .cockpit{grid-template-columns:68px minmax(0,1fr) 152px}
+ #driveline-app[data-mobile=true][data-landscape=true] .scene-top{width:calc(100% - 16px)}
+ #driveline-app[data-mobile=true][data-landscape=true] .camera-menu{top:auto;bottom:5px;right:6px}
+ #driveline-app[data-mobile=true][data-landscape=true] .camera-menu .camera-strip{top:auto;bottom:calc(100% + 5px);max-width:calc(100vw - 256px)}
+}
 </style></head><body>
 <div id="driveline-app">
-<header class="topbar"><div class="brand"><span class="brand-icon">D<span>∕</span></span><div><b>DRIVELINE</b><span>手排動力實驗室</span></div></div><div class="header-right"><span class="build-label">V8 TWIN TURBO 32V <i>×</i> 6MT</span><select id="play-mode" aria-label="遊玩模式"><option value="free">自由駕駛</option><option value="challenge">加速挑戰</option></select><button id="race-start" hidden>開始挑戰</button><button id="more-toggle" aria-controls="inspection-panel" aria-expanded="false">面板</button><button id="help-toggle" class="quiet">操作說明</button><button id="reset" class="quiet">重置</button></div></header>
+<header class="topbar"><div class="brand"><span class="brand-icon">D<span>∕</span></span><div><b>DRIVELINE</b><span>手排動力實驗室</span></div></div><div class="header-right"><span class="build-label">AUREL R8 <i>·</i> RR / 6MT</span><select id="play-mode" aria-label="遊玩模式"><option value="free">自由駕駛</option><option value="challenge">加速挑戰</option></select><button id="race-start" hidden>開始挑戰</button><button id="more-toggle" aria-controls="inspection-panel" aria-expanded="false">面板</button><button id="help-toggle" class="quiet">操作說明</button><button id="reset" class="quiet">重置</button></div></header>
 <section class="stage" aria-label="可旋轉縮放的 3D 動力系統">
 <div id="scene"></div><div id="load-message">正在組裝 V8 與手排動力系統…</div>
-<div class="scene-top"><div class="scene-caption"><span class="eyebrow">POWERTRAIN / 01</span><span id="view-label">完整動力總成</span></div><div class="view-modes" aria-label="顯示模式"><button data-mode="full">完整</button><button data-mode="transparent" class="selected">透明</button><button data-mode="exploded">拆解</button></div></div>
+<div class="scene-top"><div class="scene-caption"><span class="eyebrow">REAR ENGINE / REAR DRIVE</span><span id="view-label">AUREL R8 · 後置後驅</span></div><div class="view-modes" aria-label="顯示模式"><button data-mode="full" class="selected">完整車輛</button><button data-mode="bodyglass">車殼透明</button><button data-mode="transparent">機構透明</button><button data-mode="exploded">拆解</button></div><select id="mobile-view-mode" aria-label="觀察模式"><option value="full">完整車輛</option><option value="bodyglass">車殼透明</option><option value="transparent">機構透明</option><option value="exploded">拆解</option></select><select id="ground-mode" aria-label="地面模式"><option value="grassland">草原公路</option><option value="grid">網格地面</option></select></div>
 <div class="instruments"><div class="speed"><span id="speed">0.0</span><small>km/h</small><label id="direction">靜止</label></div><div class="rpm"><div><span id="rpm">0</span><small>rpm</small></div><div class="rpm-track"><i id="rpm-bar"></i></div><label id="engine-state">引擎關閉</label></div><div class="gear-display"><small>GEAR</small><b id="gear">N</b></div></div>
-<details id="camera-menu" class="camera-menu"><summary>特寫 · <span id="camera-name">總覽</span></summary><div class="camera-strip" aria-label="攝影機特寫"><button data-camera="overview" class="selected">總覽</button><button data-camera="pistons">活塞</button><button data-camera="valves">汽門</button><button data-camera="timing">正時</button><button data-camera="turbo">渦輪</button><button data-camera="airflow">氣流</button><button data-camera="clutch">離合器</button><button data-camera="synchro">同步器</button><button data-camera="reverse">倒檔</button><button data-camera="final">終傳</button></div></details>
+<details id="camera-menu" class="camera-menu"><summary>特寫 · <span id="camera-name">總覽</span></summary><div class="camera-strip" aria-label="攝影機特寫"><button data-camera="overview" class="selected">總覽</button><button data-camera="pistons">活塞</button><button data-camera="valves">汽門</button><button data-camera="timing">正時</button><button data-camera="turbo">渦輪</button><button data-camera="airflow">氣流</button><button data-camera="clutch">離合器</button><button data-camera="synchro">同步器</button><button data-camera="reverse">倒檔</button><button data-camera="final">終傳</button><button data-camera="exhaust">排氣管</button></div></details>
 <div id="race-hud" class="race-hud" hidden aria-label="加速挑戰計時"><div class="race-line"><span id="race-state" role="status">準備挑戰</span><b id="race-clock">0.00 s</b><span id="race-valid">正式紀錄</span></div><div class="race-splits"><div><small>0–100</small><b id="race-100">—</b><span id="delta-100"></span></div><div><small>0–200</small><b id="race-200">—</b><span id="delta-200"></span></div><div><small>0–300 km/h</small><b id="race-300">—</b><span id="delta-300"></span></div></div></div>
 <div id="cylinder-panel" hidden><b id="cylinder-detail"></b><span id="valve-detail"></span></div>
+<div id="clutch-detail" hidden></div>
 <div id="pause-overlay" hidden aria-hidden="true"></div>
 <div class="scene-bottom"><span>拖曳旋轉 · 滾輪縮放 · 雙指平移</span><span id="distance">0.0 m</span></div>
 </section>
@@ -239,13 +268,11 @@
 <label>氣流表示 <select id="airflow-mode" aria-label="氣流表示"><option value="particles">進排氣粒子</option><option value="streamlines">流線路徑</option><option value="off">關閉</option></select></label>
 <label><input id="cylinder-cutaway" type="checkbox"> 選定汽缸剖面</label>
 <label><input id="turbo-cutaway" type="checkbox"> 渦輪剖面</label>
-<label><input id="body-toggle" type="checkbox"> 車身輪廓與倒車燈</label>
-<label><input id="road-toggle" type="checkbox" checked> 地面刻線</label>
 <label>粒子密度 <select id="quality" aria-label="粒子密度"><option value="high">完整</option><option value="low">精簡</option></select></label>
 </div></details></div>
-<section class="challenge-history" aria-label="加速成績"><div class="history-heading"><b>加速成績</b><span id="record-storage">保存在此瀏覽器</span></div><p>同一 V8 設定 · 倒數結束起算 · 正式紀錄採 1.00× · 暫停／拆解／慢動作列為練習</p><div id="race-best" class="race-best"></div><div class="history-scroll"><table><thead><tr><th>紀錄</th><th>0–100</th><th>0–200</th><th>0–300</th><th>100–200</th><th>200–300</th></tr></thead><tbody id="race-records"></tbody></table></div></section><section class="verification"><div class="verification-heading"><span class="eyebrow">DRIVING SEQUENCES</span><span>四段操作驗收</span><button id="cancel-demo" hidden>停止示範，接手駕駛</button></div><div class="test-buttons"><button data-demo="1"><small>01</small> 起步 → 升 2 檔 <span id="test-1">↗</span></button><button data-demo="2"><small>02</small> 引擎煞車 / 滑行 <span id="test-2">↗</span></button><button data-demo="3"><small>03</small> 倒檔鎖止 / 倒車 <span id="test-3">↗</span></button><button data-demo="4"><small>04</small> 拆解 / 復位 <span id="test-4">↗</span></button></div><div id="demo-report" role="status">點選流程會重設至測試起點，並自動操作踏板與排檔。也可隨時接手。</div></section>
-</div><dialog id="help"><div><button id="help-close" class="quiet">關閉 ×</button><h2>從你的引擎，到車輪。</h2><p>先啟動引擎，保持離合器 100%，選 1 檔。給約 40% 油門，再用 2–3 秒將離合器降到 0%。</p><p>換檔：先收油、踩到底離合器，再選檔。等「接合完成」，緩放離合器並補油。R 必須先停車。</p><p>W／↑ 油門、S／↓ 煞車、C／Shift 離合器。按住增加踏板，放開緩慢釋放。數字 1–6 換檔，N 空檔，R 倒檔，Enter 啟動，P 暫停。桌面滑桿會保持設定。手機左手控制離合器：按住踩到底、下滑緩放、抬手放開；右手在油門與煞車上滑動調整踩下程度，抬手釋放。踩住離合器後，右手鬆油、點選 H 型排檔，再補油。</p><p>透明模式可分別調整三個外殼。拆解會凍結整套物理狀態；復位後從原狀態續行。慢動作同步縮慢曲軸、渦輪、氣流和換檔，可選 0.01×。沿用 V8 原作的凸輪、搖臂與汽門正時，保留提前、延後及重疊；粒子依實際汽門開度顯示。</p><p>加速挑戰：自動啟動並掛 1 檔，倒數三秒後開始計時。倒數時可預踩油門，但必須保持車輛靜止。首次達到 100／200／300 km/h 時記錄累計用時。再次按「結束」會保存已達成項目。暫停、慢動作、拆解或切到背景會將當趟列為練習；搶跑不計入最佳。紀錄保存在此瀏覽器，網頁版和離線版各自保存。</p><p>模擬設定：1600 kg、輪胎半徑 0.33 m、終傳 4.10；V8 扭矩曲線在 1.25 bar 滿增壓時約 650 N·m，7500 rpm 斷油，離合器容量 850 N·m。增壓隨負載與渦輪慣性建立。沿用原齒比：3.643 / 2.095 / 1.407 / 1.031 / 0.806 / 0.667；R −3.133。這是可調校的教學動力系統，非特定實車規格。採直線前驅與簡化循跡減扭／制動，車輪不空轉；車輪轉角和道路位移由同一車速計算。</p><nav><a href="originals/v8-engine.html" target="_blank">你提供的 V8 原作 ↗</a><a href="i4/index.html" target="_blank">原直四整合版 ↗</a><a href="originals/dohc_16v_3d.html" target="_blank">直四引擎原作 ↗</a><a href="originals/3d.html" target="_blank">獨立變速箱原作 ↗</a><a href="driveline-offline.html" download>下載離線整合版 ↗</a><a href="source.zip" download>完整可編輯專案 ↗</a></nav></div></dialog>
-<footer><span>V8 TWIN TURBO — ORIGINAL MECHANISM, ONE SIMULATION.</span><span>1–6 / N / R · 真實時間扭矩積分</span></footer>
+<section class="challenge-history" aria-label="加速成績"><div class="history-heading"><b>加速成績</b><span id="record-storage">保存在此瀏覽器</span></div><p>同一後驅跑車設定 · 倒數結束起算 · 正式紀錄採 1.00× · 暫停／拆解／慢動作列為練習</p><div id="race-best" class="race-best"></div><div class="history-scroll"><table><thead><tr><th>紀錄</th><th>0–100</th><th>0–200</th><th>0–300</th><th>100–200</th><th>200–300</th></tr></thead><tbody id="race-records"></tbody></table></div></section><section class="verification"><div class="verification-heading"><span class="eyebrow">DRIVING SEQUENCES</span><span>四段操作驗收</span><button id="cancel-demo" hidden>停止示範，接手駕駛</button></div><div class="test-buttons"><button data-demo="1"><small>01</small> 起步 → 升 2 檔 <span id="test-1">↗</span></button><button data-demo="2"><small>02</small> 引擎煞車 / 滑行 <span id="test-2">↗</span></button><button data-demo="3"><small>03</small> 倒檔鎖止 / 倒車 <span id="test-3">↗</span></button><button data-demo="4"><small>04</small> 拆解 / 復位 <span id="test-4">↗</span></button></div><div id="demo-report" role="status">點選流程會重設至測試起點，並自動操作踏板與排檔。也可隨時接手。</div></section>
+</div><dialog id="help"><div><button id="help-close" class="quiet">關閉 ×</button><h2>從你的引擎，到車輪。</h2><p>先啟動引擎，保持離合器 100%，選 1 檔。給約 40% 油門，再用 2–3 秒將離合器降到 0%。</p><p>換檔：先收油、踩到底離合器，再選檔。等「接合完成」，緩放離合器並補油。R 必須先停車。</p><p>W／↑ 油門、S／↓ 煞車、C／Shift 離合器。按住增加踏板，放開緩慢釋放。D 升一檔、A 降一檔（N–6，仍須踩離合器）。數字 1–6 直接選檔，N 空檔，R 倒檔，Enter 啟動，P 暫停。桌面滑桿會保持設定。手機左手控制離合器：按住踩到底、下滑緩放、抬手放開；右手在油門與煞車上滑動調整踩下程度，抬手釋放。踩住離合器後，右手鬆油、點選 H 型排檔，再補油。</p><p>完整車輛顯示不透明車殼；車殼透明只透視車身；機構透明隱藏車身，可分別調整引擎、離合器與變速箱外殼。地面可切換網格與草原雙向雙車道公路（每方向一車道）。拆解會凍結整套物理狀態；復位後從原狀態續行。慢動作同步縮慢曲軸、渦輪、氣流和換檔，可選 0.01×。沿用 V8 原作的凸輪、搖臂與汽門正時，保留提前、延後及重疊；粒子依實際汽門開度顯示。</p><p>加速挑戰：自動啟動並掛 1 檔，倒數三秒後開始計時。倒數時可預踩油門，但必須保持車輛靜止。首次達到 100／200／300 km/h 時記錄累計用時。再次按「結束」會保存已達成項目。暫停、慢動作、拆解或切到背景會將當趟列為練習；搶跑不計入最佳。紀錄保存在此瀏覽器，網頁版和離線版各自保存。</p><p>模擬設定：1560 kg、前後靜態配重 38:62、軸距 2.62 m、輪胎半徑 0.33 m、終傳 4.10；V8 扭矩曲線在 1.25 bar 滿增壓時約 650 N·m，7500 rpm 斷油，離合器容量 850 N·m。增壓隨負載與渦輪慣性建立。沿用原齒比：3.643 / 2.095 / 1.407 / 1.031 / 0.806 / 0.667；R −3.133。這是可調校的教學動力系統，非特定實車規格。採後置引擎、直線後輪驅動與簡化循跡減扭／制動，車輪不空轉；車輪轉角和道路位移由同一車速計算。</p><nav><a href="previous/driveline-stand-offline.html" target="_blank">保留的動力展示台版本 ↗</a><a href="originals/v8-engine.html" target="_blank">你提供的 V8 原作 ↗</a><a href="i4/index.html" target="_blank">原直四整合版 ↗</a><a href="originals/dohc_16v_3d.html" target="_blank">直四引擎原作 ↗</a><a href="originals/3d.html" target="_blank">獨立變速箱原作 ↗</a><a href="driveline-offline.html" download>下載離線整合版 ↗</a><a href="source.zip" download>完整可編輯專案 ↗</a></nav></div></dialog>
+<footer><span>V8 TWIN TURBO — ORIGINAL MECHANISM, ONE SIMULATION.</span><span>D 升檔 / A 降檔 · RR / 6MT</span></footer>
 </div><script>(()=>{
 const THREE=(()=>{/**
  * @license
@@ -1924,6 +1951,18 @@ function createAreaLightMaterial( intensity ) {
 
 
 return RoomEnvironment;})();
+
+// Vehicle coordinates are metres: +Z forward, +Y up, +X driver's left.
+const CAR={name:'AUREL R8',length:4.64,width:2.10,height:1.30,
+ frontZ:1.40,rearZ:-1.22,frontTrack:1.60,rearTrack:1.68,wheelRadius:.33,
+ frontTyreWidth:.23,rearTyreWidth:.285,powerScale:.15,powerX:.20,
+ powerY:.1973,powerZ:-1.42655};
+const wheelStations=()=>[
+ {id:'FL',side:1,z:CAR.frontZ,x:CAR.frontTrack/2,width:CAR.frontTyreWidth,driven:false},
+ {id:'FR',side:-1,z:CAR.frontZ,x:-CAR.frontTrack/2,width:CAR.frontTyreWidth,driven:false},
+ {id:'RL',side:1,z:CAR.rearZ,x:CAR.rearTrack/2,width:CAR.rearTyreWidth,driven:true},
+ {id:'RR',side:-1,z:CAR.rearZ,x:-CAR.rearTrack/2,width:CAR.rearTyreWidth,driven:true}
+];
 
 function createEngine(parentScene){
 const root = new THREE.Group();parentScene.add(root);const scene = root;
@@ -5986,6 +6025,30 @@ function createFinalDriveHousing(){
  };
 }
 
+
+function createClutchRelease(){
+ const group=new THREE.Group();group.name='離合器分離叉';
+ const metal=new THREE.MeshStandardMaterial({color:0x617589,metalness:.85,roughness:.28});
+ const shoeMat=new THREE.MeshStandardMaterial({color:0xb59c68,metalness:.75,roughness:.32});
+ const pivot=new THREE.Group();pivot.position.set(.76,-.46,0);group.add(pivot);
+ const parts=[],shoes=[];
+ function add(g,m,parent,p){const mesh=new THREE.Mesh(g,m);mesh.position.set(...p);mesh.castShadow=true;parent.add(mesh);parts.push(mesh);return mesh;}
+ for(const sign of [-1,1]){
+  const curve=new THREE.CatmullRomCurve3([new THREE.Vector3(0,0,sign*.155),new THREE.Vector3(-.07,.18,sign*.155),new THREE.Vector3(-.16,.46,sign*.155)]);
+  add(new THREE.TubeGeometry(curve,18,.018,8,false),metal,pivot,[0,0,0]);
+  shoes.push(add(new THREE.BoxGeometry(.025,.048,.040),shoeMat,pivot,[-.16,.46,sign*.155]));
+ }
+ add(new THREE.CylinderGeometry(.026,.026,.40,16).rotateX(Math.PI/2),metal,group,[.76,-.46,0]);
+ add(new THREE.BoxGeometry(.08,.07,.46),metal,group,[.76,-.51,0]);
+ add(new THREE.BoxGeometry(.035,.12,.065),metal,pivot,[0,-.06,0]);
+ return {group,pivot,parts,shoes,update(pedal){
+  // The fork rotates around a fixed pin. Its contact shoes follow the bearing
+  // collar axially while sliding a little in the collar's radial contact area.
+  const radius=Math.hypot(-.16,.46),target=-.16-.115*pedal;
+  pivot.rotation.z=Math.acos(target/radius)-Math.atan2(.46,-.16);
+ },signature(){return [pivot.rotation.z];}};
+}
+
 function createConnections(scene,tx){
  const steel=new THREE.MeshStandardMaterial({color:0xaebac9,metalness:.9,roughness:.22});
  const dark=new THREE.MeshStandardMaterial({color:0x263143,metalness:.75,roughness:.4});
@@ -6012,7 +6075,8 @@ function createConnections(scene,tx){
  const diaphragm=new THREE.Group();diaphragm.position.x=.37;clutch.add(diaphragm);reg(diaphragm,[2.0,0,0]);const petals=[];
  for(let i=0;i<20;i++){const a=i*2*Math.PI/20;const pivot=new THREE.Group();pivot.rotation.x=a;diaphragm.add(pivot);const p=mesh(new THREE.BoxGeometry(.022,.31,.045),steel,[0,.32,0],pivot);p.rotation.z=-.23;petals.push(p);}
  const bearing=new THREE.Group();bearing.position.x=.49;clutch.add(bearing);reg(bearing,[2.45,0,0]);annulus(.165,.092,.085,dark,[0,0,0],bearing);annulus(.15,.103,.012,steel,[-.05,0,0],bearing);
- const release=mesh(new THREE.BoxGeometry(.065,.48,.06),gold,[.5,-.28,0],clutch);reg(release,[2.45,0,0]);
+ annulus(.205,.10,.025,steel,[.085,0,0],bearing);
+ const release=createClutchRelease();clutch.add(release.group);reg(release.group,[2.45,0,0]);
  // Original transmission output flange continues into a parallel-axis final drive.
  const finalRoot=new THREE.Group();finalRoot.position.set(2.43,1.218,0);newRoot.add(finalRoot);
  const pinion=tx.gearBuilder({teeth:20,pitchRadius:.27,width:.24,helixAngle:.15,boreRadius:.09,material:steel});finalRoot.add(pinion);reg(pinion,[.50,0,0]);
@@ -6027,89 +6091,254 @@ function createConnections(scene,tx){
  cylinder(.065,.65,steel,[.12,0,0],diff);
  for(const y of [-.32,.32]){const g=tx.gearBuilder({teeth:12,pitchRadius:.20,width:.1,helixAngle:0,boreRadius:.05,material:steel});g.rotation.z=Math.PI/2;g.position.set(.12,y,0);diff.add(g);}
  const finalCase=createFinalDriveHousing();finalRoot.add(finalCase.group);reg(finalCase.group,[.1,2.3,1.2]);
- const axleZ=1.377,axleY=1.218;const wheels=[];const shafts=[];
- // Looking along forward +Z, left is +X: inset only this wheel/outer CV joint.
- // GridHelper(80,80) makes the 2.5-unit reduction exactly 2.5 ground squares.
- for(const sign of [-1,1]){const x=sign<0?-8:5.5;const start=sign<0?-7.75:3.05,end=sign<0?2.10:5.25;const axle=cylinder(.075,end-start,steel,[(end+start)/2,axleY,axleZ],newRoot);shafts.push(axle);reg(axle,[sign*.8,0,.45]);
- for(const jx of [start,end]){cylinder(.13,.22,dark,[jx,axleY,axleZ],newRoot);for(let b=0;b<5;b++){const o=mesh(new THREE.TorusGeometry(.13+b*.006,.022,6,24).rotateY(Math.PI/2),rubber,[jx+(b-2)*.045,axleY,axleZ],newRoot);}}
- const w=new THREE.Group();w.position.set(x,axleY,axleZ);newRoot.add(w);wheels.push(w);reg(w,[sign*1.6,0,.6]);
- mesh(new THREE.TorusGeometry(.96,.255,16,64).rotateY(Math.PI/2),rubber,[0,0,0],w);annulus(.78,.65,.34,steel,[0,0,0],w);cylinder(.22,.40,dark,[0,0,0],w);
- for(let i=0;i<10;i++){const a=i*Math.PI/5;const sp=mesh(new THREE.BoxGeometry(.10,.59,.085),steel,[sign*.21,.43*Math.cos(a),.43*Math.sin(a)],w);sp.rotation.x=a;}
- for(let i=0;i<54;i++){const a=i*Math.PI/27;const tread=mesh(new THREE.BoxGeometry(.40,.028,.048),dark,[0,1.212*Math.cos(a),1.212*Math.sin(a)],w);tread.rotation.x=a;}
- const mark=mesh(new THREE.BoxGeometry(.44,.025,.09),gold,[0,1.22,0],w);
- }
- // A passive rear support makes a three-point rolling stand. Its radius is
- // visual; it does not change the existing drivetrain or challenge physics.
- const supportRadius=.58,support=new THREE.Group();support.name='Rear passive support';
- support.position.set(-1.25,supportRadius,-4.35);newRoot.add(support);reg(support,[0,0,-1.7]);
- const supportWheel=new THREE.Group();support.add(supportWheel);
- mesh(new THREE.TorusGeometry(.45,.13,16,48).rotateY(Math.PI/2),rubber,[0,0,0],supportWheel);
- annulus(.35,.25,.22,steel,[0,0,0],supportWheel);cylinder(.115,.32,dark,[0,0,0],supportWheel);
- for(let i=0;i<8;i++){const a=i*Math.PI/4;const spoke=mesh(new THREE.BoxGeometry(.12,.28,.055),steel,[0,.20*Math.cos(a),.20*Math.sin(a)],supportWheel);spoke.rotation.x=a;}
- for(let i=0;i<36;i++){const a=i*Math.PI/18;const tread=mesh(new THREE.BoxGeometry(.21,.013,.035),dark,[0,.57*Math.cos(a),.57*Math.sin(a)],supportWheel);tread.rotation.x=a;}
- mesh(new THREE.BoxGeometry(.25,.018,.06),gold,[0,.565,0],supportWheel);
- cylinder(.062,.69,steel,[0,0,0],support);
- const frame=new THREE.Group();frame.name='Rear support fork and cradle';newRoot.add(frame);reg(frame,[0,-.25,-.55]);
- function beam(a,b,width=.10){const from=new THREE.Vector3(...a),to=new THREE.Vector3(...b),dir=to.clone().sub(from);const o=mesh(new THREE.BoxGeometry(width,dir.length(),width),dark,from.clone().add(to).multiplyScalar(.5).toArray(),frame);o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());return o;}
- // Fork stays outside the tyre; a low A-frame meets the fixed assembly mounts.
- for(const x of [-1.57,-.93]){
-  beam([x,.58,-4.35],[x,.95,-3.67],.095);
-  cylinder(.105,.06,steel,[x,.58,-4.35],frame);
- }
- beam([-1.57,.95,-3.67],[-.93,.95,-3.67],.12);
- beam([-1.25,.95,-3.67],[-4.55,.30,.45],.12);
- beam([-1.25,.95,-3.67],[1.60,.30,.45],.12);
- beam([-4.55,.30,.45],[1.60,.30,.45],.12);
- for(const x of [-4.55,1.60]){beam([x,.30,.45],[x,.69,.45],.12);mesh(new THREE.BoxGeometry(.36,.08,.36),dark,[x,.70,.45],frame);}
- const body=new THREE.Group();body.rotation.y=Math.PI;scene.add(body);
- const outlineMat=new THREE.LineBasicMaterial({color:0x557a89,transparent:true,opacity:.32});
- function line(points){const g=new THREE.BufferGeometry().setFromPoints(points.map(p=>new THREE.Vector3(...p)));body.add(new THREE.Line(g,outlineMat));}
- line([[-7.3,.65,-2.8],[-7.3,.65,10],[7.3,.65,10],[7.3,.65,-2.8],[-7.3,.65,-2.8]]);
- for(const x of [-7.3,7.3]){line([[x,.65,10],[x,2.8,8.2],[x,3.8,6.8],[x,3.8,3.8],[x,1.6,1.7],[x,.65,-2.8]]);}
- for(const z of [3.8,6.8])line([[-7.3,3.8,z],[7.3,3.8,z]]);
- const tail=[];for(const x of [-6.2,6.2]){const m=new THREE.MeshStandardMaterial({color:0x41464c,emissive:0x000000,transparent:true,opacity:.8});tail.push(mesh(new THREE.BoxGeometry(.70,.20,.12),m,[x,1.1,9.9],body));}
- const road=new THREE.Group();scene.add(road);const stripes=[];
- for(let i=-12;i<=12;i++){const g=new THREE.Group();g.position.z=i*3;road.add(g);for(const x of [-6.3,6.3])mesh(new THREE.BoxGeometry(.12,.007,1.25),new THREE.MeshBasicMaterial({color:0x354c5b}),[x,0,0],g);stripes.push({g,z:i*3});}
- const arrow=new THREE.Group();scene.add(arrow);arrow.position.set(-7.6,0.02,-3);const arrowMat=new THREE.MeshBasicMaterial({color:0x5ed4c0,side:THREE.DoubleSide});
- mesh(new THREE.BoxGeometry(.12,.012,1.1),arrowMat,[0,0,-.5],arrow);const sh=new THREE.Shape();sh.moveTo(0,-.45);sh.lineTo(-.32,0);sh.lineTo(.32,0);sh.closePath();const ag=new THREE.ShapeGeometry(sh);ag.rotateX(-Math.PI/2);mesh(ag,arrowMat,[0,0,0],arrow);
- let phase=0;
- return {clutch,disc,pressure,bearing,diff,wheels,shafts,body,road,bell,finalRoot,pinion,ring,finalCase,support,supportWheel,supportRadius,frame,
+ return {root:newRoot,clutch,disc,pressure,bearing,cover,diaphragm,release,diff,bell,finalRoot,pinion,ring,finalCase,
  update(s,explosion,opacity,clutchOpacity=.08){const f=explosion*explosion*(3-2*explosion);for(const e of exp)e.o.position.copy(e.base).addScaledVector(e.v,f);
  bell.update(clutchOpacity);
  disc.rotation.x=s.ai;cover.rotation.x=s.ae;pressure.rotation.x=s.ae;diaphragm.rotation.x=s.ae;
- pressure.position.x+=s.clutch*.055;bearing.position.x-=s.clutch*.115;release.position.x-=s.clutch*.115;
+ pressure.position.x+=s.clutch*.055;bearing.position.x-=s.clutch*.115;release.update(s.clutch);
  for(const p of petals)p.rotation.z=-.23+s.clutch*.30;
- pinion.rotation.x=-s.ao;diff.rotation.x=s.aw;for(const w of wheels)w.rotation.x=s.aw;for(const a of shafts)a.rotation.x=s.aw;
+ pinion.rotation.x=-s.ao;diff.rotation.x=s.aw;
  finalCase.update(opacity);
- supportWheel.rotation.x=s.distance*(1.218/P.radius)/supportRadius;
- for(const st of stripes)st.g.position.z=((st.z-s.distance*1.218/P.radius+36)%72+72)%72-36;
- for(const l of tail){l.material.color.setHex(s.gear==='R'?0xffffee:0x41464c);l.material.emissive.setHex(s.gear==='R'?0xbecdd1:0);l.material.emissiveIntensity=s.gear==='R'?1.8:0;}
- arrow.rotation.y=s.v<-.02?Math.PI:0;
- },signature(){return [disc.rotation.x,pressure.rotation.x,bearing.position.x,diff.rotation.x,...wheels.map(w=>w.rotation.x),supportWheel.rotation.x];}};
+ },signature(){return [disc.rotation.x,pressure.rotation.x,bearing.position.x,diff.rotation.x,...release.signature()];}};
+}
+
+
+function createExhaust(scene,engine){
+ const root=new THREE.Group();root.name='雙渦輪 → 觸媒 → 消音器 → 尾管';scene.add(root);
+ const pipeMat=new THREE.MeshStandardMaterial({color:0xa5a8ac,metalness:.9,roughness:.25,side:THREE.DoubleSide});
+ const canMat=new THREE.MeshStandardMaterial({color:0x89909a,metalness:.85,roughness:.36,side:THREE.DoubleSide});
+ const tipMat=new THREE.MeshStandardMaterial({color:0xcbd0d6,metalness:1,roughness:.17,side:THREE.DoubleSide});
+ const black=new THREE.MeshStandardMaterial({color:0x10151b,roughness:.7});
+ const flowMat=new THREE.MeshBasicMaterial({color:0xffb260});
+ const branches=[],dummy=new THREE.Object3D();
+ engine.root.updateWorldMatrix(true,true);
+ for(const [i,key] of ['A','B'].entries()){
+  const turbo=engine.mechanics.turboSystems[key],source=turbo.turbineExhaustCurve;
+  const start=turbo.root.localToWorld(source.getPoint(1));
+  const tangent=source.getTangent(1).transformDirection(turbo.root.matrixWorld),sign=i===0?1:-1;
+  const points=[start,start.clone().addScaledVector(tangent,.075),new THREE.Vector3(start.x,.22,start.z-.10),
+   new THREE.Vector3(sign*.55,.22,-1.77),new THREE.Vector3(sign*.60,.25,-2.02),new THREE.Vector3(sign*.60,.28,-2.35)];
+  const curve=new THREE.CatmullRomCurve3(points,false,'centripetal');
+  const branch=new THREE.Group();branch.name=key+' 排氣支路';root.add(branch);
+  const pipe=new THREE.Mesh(new THREE.TubeGeometry(curve,100,.024,12,false),pipeMat);pipe.castShadow=true;branch.add(pipe);
+  for(const [t,r,len,label] of [[.55,.050,.14,'觸媒'],[.80,.073,.23,'消音器']]){
+   const position=curve.getPointAt(t),direction=curve.getTangentAt(t);
+   const can=new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,32,1,true),canMat);can.name=label;can.position.copy(position);can.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),direction);can.castShadow=true;branch.add(can);
+   for(const side of [-1,1]){const shape=new THREE.Shape();shape.absarc(0,0,r,0,Math.PI*2,false);shape.holes.push(new THREE.Path().absarc(0,0,.026,0,Math.PI*2,true));
+    const cap=new THREE.Mesh(new THREE.ShapeGeometry(shape,32),canMat);cap.position.copy(position).addScaledVector(direction,side*len/2);cap.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),direction);branch.add(cap);}
+  }
+  const end=curve.getPoint(1),direction=curve.getTangent(1),tipGroup=new THREE.Group();tipGroup.position.copy(end).addScaledVector(direction,-.045);tipGroup.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),direction);branch.add(tipGroup);
+  const tip=new THREE.Mesh(new THREE.CylinderGeometry(.048,.043,.14,40,1,true),tipMat);tipGroup.add(tip);
+  const inner=new THREE.Mesh(new THREE.CylinderGeometry(.041,.037,.13,40,1,true),black);tipGroup.add(inner);
+  const particles=new THREE.InstancedMesh(new THREE.SphereGeometry(.006,6,4),flowMat,32);particles.frustumCulled=false;branch.add(particles);
+  branches.push({key,group:branch,curve,start,turbo,source,particles,end});
+ }
+ return {root,branches,update(s,explosion,mode){
+  const f=explosion*explosion*(3-2*explosion),show=mode==='transparent'||mode==='bodyglass'||mode==='exploded';
+  root.position.y=-.10*f;root.position.z=-.55*f;
+  for(const m of [pipeMat,canMat]){m.opacity=mode==='transparent'?.20:mode==='exploded'?.55:1;m.transparent=m.opacity<1;m.depthWrite=m.opacity>.95;}
+  for(const b of branches){b.particles.visible=show&&s.running;for(let i=0;i<32;i++){
+   const t=((i/32+s.ae*.009)%1+1)%1;dummy.position.copy(b.curve.getPointAt(t));dummy.scale.setScalar(s.running?1:0);dummy.updateMatrix();b.particles.setMatrixAt(i,dummy.matrix);
+  }b.particles.instanceMatrix.needsUpdate=true;}
+ },signature(){return [root.position.y,root.position.z];}};
+}
+
+
+// Original coupé body, with open wheel arches and a separate glazed cabin.
+function createVehicle(scene,engine,link){
+ const root=new THREE.Group();root.name='AUREL R8 · 後置後驅';scene.add(root);
+ const exterior=new THREE.Group(),interior=new THREE.Group(),chassis=new THREE.Group();root.add(exterior,interior,chassis);
+ const paint=new THREE.MeshPhysicalMaterial({color:0x176d83,metalness:.72,roughness:.24,clearcoat:.95,clearcoatRoughness:.15,side:THREE.DoubleSide});
+ const carbon=new THREE.MeshStandardMaterial({color:0x17212a,metalness:.48,roughness:.45,side:THREE.DoubleSide});
+ const windowMat=new THREE.MeshPhysicalMaterial({color:0x23434f,metalness:.25,roughness:.10,transparent:true,opacity:.40,depthWrite:false,side:THREE.DoubleSide});
+ const trim=new THREE.MeshStandardMaterial({color:0x080f15,metalness:.25,roughness:.4});
+ const silver=new THREE.MeshStandardMaterial({color:0xb1bac4,metalness:.9,roughness:.23});
+ const bronze=new THREE.MeshStandardMaterial({color:0xa5916b,metalness:.88,roughness:.25});
+ const rubber=new THREE.MeshStandardMaterial({color:0x121619,roughness:.86});
+ const leather=new THREE.MeshStandardMaterial({color:0x28343e,roughness:.78,side:THREE.DoubleSide});
+ const belt=new THREE.MeshStandardMaterial({color:0xc1734e,roughness:.8});
+ const brakeMat=new THREE.MeshStandardMaterial({color:0xde653d,metalness:.45,roughness:.3});
+ const light=new THREE.MeshStandardMaterial({color:0xdcf5ff,emissive:0xb3deff,emissiveIntensity:2.4,roughness:.2});
+ const rearLight=new THREE.MeshStandardMaterial({color:0xca2935,emissive:0xd91624,emissiveIntensity:.6,roughness:.22});
+ const reverseMat=new THREE.MeshStandardMaterial({color:0x52606a,emissive:0x000000,roughness:.2});
+ const exp=[],wheels=[],shafts=[],stubs=[],rotors=[],calipers=[];
+ const reg=(o,v)=>exp.push({o,base:o.position.clone(),v:new THREE.Vector3(...v)});
+ function mesh(g,m,p=[0,0,0],parent=root){const o=new THREE.Mesh(g,m);o.position.set(...p);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o;}
+ const box=(s,m,p,parent)=>mesh(new THREE.BoxGeometry(...s),m,p,parent);
+ function tube(points,r,m,parent=root){return mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)),false,'catmullrom',.06),Math.max(12,points.length*6),r,8,false),m,[0,0,0],parent);}
+ function beam(a,b,r,m,parent=root){const start=new THREE.Vector3(...a),end=new THREE.Vector3(...b),delta=end.clone().sub(start);const o=mesh(new THREE.CylinderGeometry(r,r,delta.length(),12),m,start.add(end).multiplyScalar(.5).toArray(),parent);o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());return o;}
+ function ring(ro,ri,h,m,p,parent){const s=new THREE.Shape();s.absarc(0,0,ro,0,Math.PI*2,false);s.holes.push(new THREE.Path().absarc(0,0,ri,0,Math.PI*2,true));const g=new THREE.ExtrudeGeometry(s,{depth:h,bevelEnabled:false,curveSegments:40});g.translate(0,0,-h/2);g.rotateY(Math.PI/2);return mesh(g,m,p,parent);}
+ function surface(fn,nu,nv,m,parent){const p=[],idx=[];for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++)p.push(...fn(i/nu,j/nv));for(let j=0;j<nv;j++)for(let i=0;i<nu;i++){const a=j*(nu+1)+i,b=a+1,c=a+nu+1,d=c+1;idx.push(a,c,b,b,c,d);}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setIndex(idx);g.computeVertexNormals();return mesh(g,m,[0,0,0],parent);}
+ const sections=[[-2.32,.78,.57,.70],[-2.02,.98,.76,.86],[-1.22,1.04,.83,1.00],[-.68,.94,.73,.86],[.60,.92,.68,.73],[1.40,.98,.77,.71],[1.95,.94,.63,.62],[2.32,.77,.47,.47]];
+ function section(z){let i=1;while(i<sections.length-1&&z>sections[i][0])i++;const a=sections[i-1],b=sections[i],t=Math.max(0,Math.min(1,(z-a[0])/(b[0]-a[0]))),s=t*t*(3-2*t);return a.slice(1).map((v,k)=>v+(b[k+1]-v)*s);}
+ function arch(z){let y=.18;for(const axle of [CAR.frontZ,CAR.rearZ]){const d=z-axle;if(Math.abs(d)<.385)y=Math.max(y,CAR.wheelRadius+Math.sqrt(.385*.385-d*d));}return y;}
+ const bonnet=new THREE.Group(),deck=new THREE.Group(),roof=new THREE.Group();exterior.add(bonnet,deck,roof);reg(bonnet,[0,1.2,.5]);reg(deck,[0,1.3,-.6]);reg(roof,[0,2.2,0]);
+ for(const [z0,z1,parent] of [[.90,2.32,bonnet],[-2.32,-.68,deck]])surface((u,v)=>{const z=z0+(z1-z0)*v,[w,h,c]=section(z),x=(u*2-1)*w;return [x,h+(c-h)*Math.pow(Math.max(0,1-(x/w)**2),.7),z];},32,48,paint,parent);
+ const sides=[];
+ for(const sign of [-1,1]){
+  const side=new THREE.Group();exterior.add(side);sides.push(side);reg(side,[sign*1.05,.15,0]);
+  surface((u,v)=>{const z=-2.32+4.64*v,[w,h]=section(z),bottom=arch(z),y=bottom+(h-bottom)*u;return [sign*(w-.035*Math.sin(u*Math.PI)),y,z];},8,240,paint,side);
+  surface((u,v)=>{const z=-.68+1.58*v,[w,h]=section(z),x=.67+(w-.67)*u;return [sign*x,h+.035*(1-u),z];},10,30,paint,side);
+  for(const axle of [CAR.frontZ,CAR.rearZ]){const points=[];for(let i=0;i<=48;i++){const a=i/48*Math.PI;const z=axle+.386*Math.cos(a),[w]=section(z);points.push([sign*(w+.003),CAR.wheelRadius+.386*Math.sin(a),z]);}tube(points,.012,paint,side);}
+  tube([[sign*.94,.20,-.66],[sign*.93,.19,.15],[sign*.94,.21,.92]],.035,carbon,side);
+  tube([[sign*.935,.69,.82],[sign*.94,.24,.76],[sign*.95,.21,-.58],[sign*.945,.72,-.63]],.004,trim,side);
+  box([.014,.028,.16],silver,[sign*.944,.66,-.34],side);
+  const intake=box([.028,.19,.32],trim,[sign*.957,.58,-.63],side);intake.rotation.x=-.15;
+  for(let i=0;i<4;i++)box([.035,.012,.25],carbon,[sign*.975,.515+i*.04,-.63],side);
+  beam([sign*.78,.79,.57],[sign*1.04,.87,.61],.018,trim,side);
+  const mirror=mesh(new THREE.SphereGeometry(1,24,14),paint,[sign*1.055,.88,.62],side);mirror.scale.set(.11,.055,.09);
+  const mirrorFace=box([.13,.055,.008],silver,[sign*1.06,.88,.53],side);
+  surface((u,v)=>{const z=-.51+1.40*v,roofY=z<.45?1.245:1.245-(z-.45)*1.11,baseY=.77;return [sign*(.655+.16*u),baseY+(roofY-baseY)*(1-u),z];},2,35,windowMat,roof);
+  tube([[sign*.81,.78,.91],[sign*.64,1.25,.44],[sign*.64,1.26,-.49],[sign*.81,.79,-.68]],.023,paint,roof);
+  tube([[sign*.81,.77,-.68],[sign*.81,.77,.91]],.012,trim,side);
+  tube([[sign*.70,1.21,-.46],[sign*.82,.78,-.54]],.025,trim,roof);
+ }
+ surface((u,v)=>{const x=(u*2-1)*.65,z=-.50+.95*v;return [x,1.30-.045*(x/.65)**2,z];},24,20,paint,roof);
+ surface((u,v)=>{const w=.65+.16*v;return [(u*2-1)*w,1.25-.48*v,.45+.45*v];},24,16,windowMat,roof);
+ surface((u,v)=>{const w=.65+.10*v;return [(u*2-1)*w,1.25-.36*v,-.50-.40*v];},24,16,windowMat,roof);
+ tube([[-.65,1.25,.45],[0,1.28,.45],[.65,1.25,.45]],.016,trim,roof);
+ tube([[-.81,.77,.90],[0,.78,.91],[.81,.77,.90]],.014,trim,bonnet);
+ // Sculpted nose, rear fascia, splitters and open tailpipe apertures.
+ for(const [z,sign,parent,y0] of [[2.32,1,bonnet,.20],[-2.32,-1,deck,.38]])surface((u,v)=>{const [w,h,c]=section(z),x=(u*2-1)*w,top=h+(c-h)*Math.pow(Math.max(0,1-(x/w)**2),.7);return [x,y0+(top-y0)*v,z];},32,8,paint,parent);
+ box([1.55,.035,.30],carbon,[0,.16,2.12],bonnet);box([1.10,.15,.035],trim,[0,.32,2.28],bonnet);
+ for(let i=-5;i<=5;i++)box([.012,.13,.045],carbon,[i*.092,.32,2.30],bonnet);
+ for(const sign of [-1,1]){
+  const lamp=box([.36,.085,.05],trim,[sign*.64,.535,2.18],bonnet);lamp.rotation.y=sign*.18;
+  const led=box([.32,.014,.055],light,[sign*.64,.56,2.21],bonnet);led.rotation.y=sign*.18;
+  const led2=box([.23,.011,.055],light,[sign*.67,.522,2.208],bonnet);led2.rotation.y=sign*.18;
+  box([.30,.12,.035],trim,[sign*.86,.25,-2.22],deck);
+  box([.13,.023,.03],reverseMat,[sign*.54,.54,-2.338],deck);
+  box([.54,.023,.035],rearLight,[sign*.48,.59,-2.338],deck);
+ }
+ box([.94,.14,.05],carbon,[0,.23,-2.28],deck);box([1.55,.03,.37],carbon,[0,.14,-2.13],deck);
+ for(let i=-2;i<=2;i++)box([.014,.12,.34],carbon,[i*.17,.17,-2.16],deck);
+ box([1.46,.022,.16],carbon,[0,.875,-2.01],deck);
+ for(const sign of [-1,1])box([.035,.08,.06],carbon,[sign*.52,.82,-2.01],deck);
+ // Rear engine cover: airflow slots above the intact V8.
+ for(let i=0;i<7;i++){const z=-1.86+i*.085,[,h,c]=section(z);box([.83,.012,.026],trim,[0,c+.008,z],deck);}
+ // Floor and frame; no rear caster or display stand remains.
+ const floor=box([1.45,.07,2.20],carbon,[0,.20,.12],chassis);reg(floor,[0,-.30,0]);
+ for(const x of [-.65,.65])beam([x,.20,-1.9],[x,.20,1.9],.035,silver,chassis);
+ for(const z of [CAR.frontZ,CAR.rearZ])beam([-.66,.24,z],[.66,.24,z],.033,silver,chassis);
+ box([1.35,.28,.08],carbon,[0,.41,-.72],chassis);
+ for(const x of [-.34,.34]){
+  const seat=new THREE.Group();seat.position.set(x,.34,-.10);interior.add(seat);reg(seat,[0,.70,0]);
+  box([.46,.11,.48],leather,[0,0,0],seat);const back=box([.45,.62,.11],leather,[0,.31,-.22],seat);back.rotation.x=-.12;
+  box([.24,.17,.12],leather,[0,.67,-.26],seat);
+  for(const sx of [-.23,.23])box([.075,.20,.44],leather,[sx,.07,0],seat);
+  tube([[.16,.64,-.18],[.06,.26,-.13],[-.14,.03,.12]],.016,belt,seat);
+ }
+ box([1.40,.17,.27],leather,[0,.76,.73],interior);box([.20,.23,.74],carbon,[0,.38,.14],interior);
+ beam([.35,.72,.65],[.35,.91,.50],.025,trim,interior);
+ const steering=mesh(new THREE.TorusGeometry(.145,.016,10,36),trim,[.35,.91,.49],interior);steering.rotation.x=-.3;
+ for(const a of [0,2.2,4.1]){const spoke=box([.024,.13,.018],silver,[.35+Math.sin(a)*.065,.91+Math.cos(a)*.065,.49],interior);spoke.rotation.z=-a;}
+ const cabinLever=new THREE.Group();cabinLever.position.set(0,.50,.14);interior.add(cabinLever);beam([0,0,0],[0,.16,0],.01,silver,cabinLever);mesh(new THREE.SphereGeometry(.027,16,10),trim,[0,.17,0],cabinLever);
+ // Four complete hubs, brake discs, fixed calipers and suspension links.
+ for(const station of wheelStations()){
+  const assembly=new THREE.Group();assembly.name=station.id+(station.driven?' 驅動輪':' 從動輪');assembly.position.set(station.x,CAR.wheelRadius,station.z);root.add(assembly);reg(assembly,[station.side*.85,.04,0]);
+  const rotating=new THREE.Group();assembly.add(rotating);const w=station.width;
+  const profile=[[.225,-w/2],[.28,-w/2],[.316,-w*.42],[.33,-w*.30],[.33,w*.30],[.316,w*.42],[.28,w/2],[.225,w/2]].map(([r,y])=>new THREE.Vector2(r,y));
+  mesh(new THREE.LatheGeometry(profile,64).rotateZ(Math.PI/2),rubber,[0,0,0],rotating);
+  ring(.239,.211,w*.94,bronze,[0,0,0],rotating);ring(.208,.055,.016,silver,[-station.side*w*.27,0,0],rotating);
+  mesh(new THREE.CylinderGeometry(.064,.064,w+ .018,24).rotateZ(Math.PI/2),bronze,[0,0,0],rotating);
+  for(let i=0;i<5;i++)for(const offset of [-.07,.07]){const a=i*Math.PI*2/5+offset;const spoke=box([.035,.177,.019],bronze,[station.side*w*.41,.139*Math.cos(a),.139*Math.sin(a)],rotating);spoke.rotation.x=a;}
+  for(let i=0;i<40;i++){const a=i*Math.PI/20;const tread=box([w*.70,.006,.012],rubber,[0,.326*Math.cos(a),.326*Math.sin(a)],rotating);tread.rotation.x=a;}
+  const caliper=box([.08,.11,.075],brakeMat,[-station.side*w*.29,.04,-.183],assembly);calipers.push(caliper);rotors.push(rotating);
+  for(const y of [.23,.45])for(const dz of [-.15,.15])beam([station.side*.48,y,station.z+dz],[station.x-station.side*.08,.33,station.z],.014,silver,chassis);
+  const top=[station.side*.65,.71,station.z],bottom=[station.x-station.side*.10,.37,station.z];beam(bottom,top,.025,carbon,chassis);
+  const coil=[];for(let i=0;i<=80;i++){const t=i/80,a=t*8*Math.PI;coil.push([bottom[0]+(top[0]-bottom[0])*t+.037*Math.cos(a),bottom[1]+(top[1]-bottom[1])*t,bottom[2]+.037*Math.sin(a)]);}tube(coil,.007,brakeMat,chassis);
+  wheels.push({station,assembly,rotating,caliper});
+ }
+ // Articulated rear halfshafts: diff ports and wheel hubs are the endpoints.
+ link.diff.updateWorldMatrix(true,true);
+ for(const side of [-1,1]){
+  const start=link.diff.localToWorld(new THREE.Vector3(side<0?-.78:1.16,0,0)),end=new THREE.Vector3(side*CAR.rearTrack/2,CAR.wheelRadius,CAR.rearZ);
+  const port=link.diff.localToWorld(new THREE.Vector3(side<0?-.16:.40,0,0)),stub=new THREE.Group();stub.position.copy(port.clone().add(start).multiplyScalar(.5));root.add(stub);mesh(new THREE.CylinderGeometry(.010,.010,port.distanceTo(start),16).rotateZ(Math.PI/2),silver,[0,0,0],stub);stubs.push(stub);reg(stub,[side*.15,0,.20]);
+  const g=new THREE.Group(),spin=new THREE.Group();g.position.copy(start.clone().add(end).multiplyScalar(.5));g.quaternion.setFromUnitVectors(new THREE.Vector3(1,0,0),end.clone().sub(start).normalize());root.add(g);g.add(spin);reg(g,[side*.30,0,.35]);
+  const len=start.distanceTo(end);mesh(new THREE.CylinderGeometry(.014,.014,len,16).rotateZ(Math.PI/2),silver,[0,0,0],spin);
+  for(const x of [-len/2,len/2]){mesh(new THREE.SphereGeometry(.035,16,10),silver,[x,0,0],spin);for(let i=0;i<4;i++)mesh(new THREE.TorusGeometry(.034,.005,6,20).rotateY(Math.PI/2),rubber,[x+(i-1.5)*.014,0,0],spin);}
+  shafts.push({group:g,spin,start,end,length:len});
+ }
+ const exhaust=createExhaust(scene,engine);
+ return {root,exterior,interior,chassis,wheels,shafts,stubs,exhaust,paint,windowMat,section,arch,cabinLever,reverseMat,rearLight,
+ update(s,explosion,mode){const f=explosion*explosion*(3-2*explosion);for(const p of exp)p.o.position.copy(p.base).addScaledVector(p.v,f);
+  exterior.visible=mode!=='transparent';const opacity=mode==='bodyglass'?.16:mode==='exploded'?.52:1;
+  paint.opacity=opacity;paint.transparent=opacity<1;paint.depthWrite=opacity>.95;
+  windowMat.opacity=mode==='bodyglass'?.08:mode==='exploded'?.16:.40;
+  cabinLever.rotation.x=s.lever.x*.9;cabinLever.rotation.z=-s.lever.z*.9;
+  for(const w of wheels)w.rotating.rotation.x=s.aw;for(const a of shafts)a.spin.rotation.x=s.aw;for(const stub of stubs)stub.rotation.x=s.aw;
+  reverseMat.color.setHex(s.gear==='R'?0xffffff:0x52606a);reverseMat.emissive.setHex(s.gear==='R'?0xdaeeff:0);reverseMat.emissiveIntensity=s.gear==='R'?2:0;
+  rearLight.emissiveIntensity=s.brake>.02?2.5:.6;
+  exhaust.update(s,explosion,mode);
+ },signature(){return [...wheels.map(w=>w.rotating.rotation.x),...shafts.map(a=>a.spin.rotation.x),...stubs.map(o=>o.rotation.x),cabinLever.rotation.x,cabinLever.rotation.z,...exhaust.signature()];}};
 }
 
 
 // Display units are independent of SI. Preserve the V8's local geometry.
 // Local -Z (flywheel) faces world +X; its original -Z rotation becomes +X.
 function mountDriveline(scene) {
-  const engine=createEngine(scene);
+  const powerRoot=new THREE.Group();powerRoot.name='原作 V8 與手排總成';scene.add(powerRoot);
+  powerRoot.scale.setScalar(CAR.powerScale);powerRoot.position.set(CAR.powerX,CAR.powerY,CAR.powerZ);
+  const engine=createEngine(powerRoot);
   engine.root.scale.setScalar(.75);
   engine.root.rotation.y=-Math.PI/2;
   engine.root.position.set(-2.036-2.06*.75,1.9,0);
-  const trans=createTransmission(scene);
+  const trans=createTransmission(powerRoot);
   trans.useExternalBellhousing();
   trans.fitFinalDriveCover();
   trans.root.position.set(.1,1.559,0);trans.root.scale.setScalar(.62);
   // Reverse only the adapter's axis signs, not tooth counts or internal geometry.
   const updateTransmission=trans.update.bind(trans);
   trans.update=(s,...args)=>updateTransmission({...s,ai:-s.ai,ao:-s.ao,ar:-s.ar},...args);
-  const link=createConnections(scene,trans);
-  link.body.visible=false;
-  return {engine,trans,link};
+  const link=createConnections(powerRoot,trans);
+  scene.updateMatrixWorld(true);
+  const vehicle=createVehicle(scene,engine,link);
+  return {engine,trans,link,powerRoot,vehicle};
+}
+
+
+function createGround(scene){
+ const root=new THREE.Group(),gridRoot=new THREE.Group(),roadRoot=new THREE.Group();root.add(gridRoot,roadRoot);scene.add(root);
+ const mat=(color,roughness=1)=>new THREE.MeshStandardMaterial({color,roughness});
+ const asphalt=mat(0x30363a),grass=mat(0x6b8750),shoulder=mat(0x9b9c84),yellow=mat(0xe8bd44),white=mat(0xd6dcd4),gridMat=mat(0x35404a);
+ function plane(w,l,m,x,y,z,parent){const o=new THREE.Mesh(new THREE.PlaneGeometry(w,l),m);o.rotation.x=-Math.PI/2;o.position.set(x,y,z);o.receiveShadow=true;parent.add(o);return o;}
+ plane(240,240,gridMat,0,-.004,0,gridRoot);const grid=new THREE.GridHelper(160,160,0x718190,0x566371);grid.position.y=.001;gridRoot.add(grid);
+ const stations=wheelStations(),xs=stations.map(w=>w.x),center=(Math.min(...xs)+Math.max(...xs))/2,halfTrack=(Math.max(...xs)-Math.min(...xs))/2;
+ const guides=new THREE.Group();gridRoot.add(guides);const referenceXs=[center-halfTrack-.27,center+halfTrack+.27];
+ for(const x of referenceXs)for(let i=-25;i<=25;i++)plane(.035,.80,white,x,.004,i*1.6,guides);
+ const laneWidth=3.5,roadCenter=laneWidth/2;
+ plane(240,240,grass,0,-.006,0,roadRoot);plane(laneWidth*2+1.1,240,shoulder,roadCenter,-.001,0,roadRoot);plane(laneWidth*2,240,asphalt,roadCenter,.002,0,roadRoot);
+ for(const x of [roadCenter-.08,roadCenter+.08])plane(.055,240,yellow,x,.006,0,roadRoot);
+ for(const x of [roadCenter-laneWidth+.13,roadCenter+laneWidth-.13])plane(.075,240,white,x,.006,0,roadRoot);
+ // Road texture, reflectors and roadside objects repeat only from SI distance.
+ const moving=new THREE.Group();roadRoot.add(moving);
+ const dashMat=mat(0xa6b3a1),leaf=mat(0x365c38),trunk=mat(0x5a4d3c),hillMat=mat(0x849875);
+ const repeat=96,roadMarks=[],trees=[];
+ for(let i=0;i<24;i++)for(const x of [-1.92,5.42]){
+  const marker=new THREE.Mesh(new THREE.BoxGeometry(.055,.35,.06),dashMat);marker.position.set(x,.175,i*4-48);moving.add(marker);roadMarks.push({o:marker,z:marker.position.z});
+ }
+ // Instanced grass patches avoid hundreds of extra draw calls on phones.
+ const patches=new THREE.InstancedMesh(new THREE.PlaneGeometry(.7,.9).rotateX(-Math.PI/2),mat(0x78945b),240),dummy=new THREE.Object3D();moving.add(patches);
+ const grassPoints=[];for(let i=0;i<240;i++){const side=i%2?1:-1,x=side>0?6+(i*3.173%30):-2.6-(i*4.213%30),z=(i*7.137)%96-48;grassPoints.push({x,z,angle:i*1.37});}
+ for(let i=0;i<16;i++){
+  const g=new THREE.Group(),x=i%2?7+(i*2.37%11):-5-(i*1.77%12),z=(i*13.71)%96-48;g.position.set(x,0,z);moving.add(g);
+  const stem=new THREE.Mesh(new THREE.CylinderGeometry(.065,.09,1.4,6),trunk);stem.position.y=.7;g.add(stem);
+  const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(1,1),leaf);crown.scale.set(.8,1.25,.8);crown.position.y=1.8;g.add(crown);trees.push({o:g,z});
+ }
+ for(let i=0;i<12;i++){const hill=new THREE.Mesh(new THREE.SphereGeometry(1,24,10),hillMat);hill.scale.set(12+i%3*5,3+i%4*1.2,16);hill.position.set(i%2?40:-40,-1,-100+i*18);roadRoot.add(hill);}
+ const mod=(v,n)=>((v+n/2)%n+n)%n-n/2;
+ let mode='grassland';
+ return {root,gridRoot,roadRoot,grid,guides,referenceXs,laneWidth,roadCenter,roadMarks,trees,
+  setMode(value){mode=value==='grid'?'grid':'grassland';gridRoot.visible=mode==='grid';roadRoot.visible=mode==='grassland';scene.background=new THREE.Color(mode==='grid'?0x4d5d6c:0xb6cad2);scene.fog=new THREE.FogExp2(scene.background,mode==='grid'?.013:.015);},
+  update(s,e){root.visible=e===0;grid.position.z=-mod(s.distance,1);guides.position.z=-mod(s.distance,1.6);
+   for(const p of [...roadMarks,...trees])p.o.position.z=mod(p.z-s.distance,repeat);
+   for(let i=0;i<grassPoints.length;i++){const p=grassPoints[i];dummy.position.set(p.x,.002,mod(p.z-s.distance,repeat));dummy.rotation.y=p.angle;dummy.updateMatrix();patches.setMatrixAt(i,dummy.matrix);}patches.instanceMatrix.needsUpdate=true;
+  },signature(){return [grid.position.z,guides.position.z,...roadMarks.map(p=>p.o.position.z),...trees.map(p=>p.o.position.z)];}
+ };
 }
 
 // SI dynamics for a configurable educational twin-turbo V8. Not a production engine map.
-const P={mass:1600,effectiveMass:1645,radius:.33,finalDrive:4.1,engineJ:.42,inputJ:.055,clutchMax:850,idle:850,redline:7500,dragArea:.70,airDensity:1.225,rolling:.012,brakeMax:15500,tyreMu:1.05,frontWeight:.60,wheelbase:2.7,cgHeight:.52,boostMax:1.25,step:1/480};
+const P={mass:1560,effectiveMass:1605,radius:.33,finalDrive:4.1,engineJ:.42,inputJ:.055,clutchMax:850,idle:850,redline:7500,dragArea:.62,airDensity:1.225,rolling:.012,brakeMax:15500,tyreMu:1.05,frontWeight:.38,wheelbase:2.62,cgHeight:.47,boostMax:1.25,step:1/480};
 const RATIOS={'1':51/14,'2':44/21,'3':38/27,'4':33/32,'5':29/36,'6':26/39,'R':-47/15,'N':0};
 const GATE={'1':[-.22,-.24],'2':[.22,-.24],'3':[-.22,-.08],'4':[.22,-.08],'5':[-.22,.08],'6':[.22,.08],'R':[.22,.24],'N':[0,0]};
 const slots={'1':['1-2',.15],'2':['1-2',-.15],'3':['3-4',.15],'4':['3-4',-.15],'5':['5-6',.15],'6':['5-6',-.15]};
@@ -6127,6 +6356,7 @@ class Drivetrain{
  notify(msg){this.s.message=msg;this.s.events.push({t:this.s.time,msg});if(this.s.events.length>60)this.s.events.shift();}
  ignition(){const s=this.s;if(s.running){s.running=false;s.starter=0;this.notify('引擎已熄火。');return true;}if(s.gear!=='N'&&s.clutch<.9){this.notify('啟動前請踩到底離合器，或切至空檔。');return false;}s.stalled=false;s.stallTimer=0;s.starter=.95;this.notify('起動馬達運轉中…');return true;}
  requestGear(g){const s=this.s;if(!(g in RATIOS))return false;if(g==='R'&&Math.abs(s.v)>.08){this.notify('請先停車');return false;}if(g!=='R'&&g!=='N'&&s.v<-.08){this.notify('請先停車，再選前進檔。');return false;}if(s.shift.phase!=='IDLE'){this.notify('請等本次換檔完成。');return false;}if(s.gear===g)return true;if(s.clutch<.9){this.notify('請先踩到底離合器');return false;}const from=s.gear;s.shift={phase:g==='R'&&Math.abs(rpm(s.wi))>60?'WAIT_INPUT':'DISENGAGE',timer:0,from,to:g};this.notify(s.shift.phase==='WAIT_INPUT'?'等待輸入軸降至 60 rpm 以下':'原檔位脫離');return true;}
+ requestSequential(delta){const s=this.s;if(s.shift.phase!=='IDLE'){this.notify('請等本次換檔完成。');return false;}const gears=['N','1','2','3','4','5','6'];if(s.gear==='R')return delta>0?this.requestGear('N'):false;const next=gears.indexOf(s.gear)+Math.sign(delta);if(next<0||next>=gears.length)return false;return this.requestGear(gears[next]);}
  advanceShift(dt){const s=this.s,sh=s.shift;if(sh.phase==='IDLE')return;
  if(s.clutch<.9){this.notify('換檔暫停：請踩住離合器');return;}
  if(sh.to==='R'&&Math.abs(s.v)>.08){s.shift={phase:'IDLE',timer:0,from:s.gear,to:s.gear};this.notify('請先停車');return;}
@@ -6164,7 +6394,7 @@ class Drivetrain{
  let combustion=s.running?s.throttlePos*fullThrottleTorque(erpm,s.boostBar)+idle:0;
  if(erpm>P.redline)s.revCut=true;else if(erpm<P.redline-250)s.revCut=false;if(s.revCut)combustion=0;
  let starterTorque=0;if(s.starter>0){s.starter=Math.max(0,s.starter-dt);starterTorque=105;if(erpm>450&&!s.running){s.running=true;this.notify('V8 引擎運轉');}}
- const normal=clamp(P.mass*9.81*P.frontWeight-P.mass*s.acceleration*P.cgHeight/P.wheelbase,P.mass*9.81*.30,P.mass*9.81*.85);
+ const normal=clamp(P.mass*9.81*(1-P.frontWeight)+P.mass*s.acceleration*P.cgHeight/P.wheelbase,P.mass*9.81*.30,P.mass*9.81*.85);
  const grip=P.tyreMu*normal;s.tractionLimit=grip;
  const torqueLimit=k?grip/Math.abs(k)*(1+P.engineJ*k*k/P.effectiveMass):Infinity;
  const requested=combustion;
@@ -6206,7 +6436,7 @@ class Drivetrain{
 
 const RACE_TARGETS=[100,200,300];
 let configHash=2166136261;for(const ch of JSON.stringify({P,RATIOS,map:'v8-tt-2026-11-v1'}))configHash=Math.imul(configHash^ch.charCodeAt(0),16777619)>>>0;
-const RACE_CONFIG='v8-'+configHash.toString(16);
+const RACE_CONFIG='rr-r8-'+configHash.toString(16);
 const RACE_STORAGE_KEY='driveline-acceleration-records-v1';
 class AccelerationChallenge{
  constructor(storage=null){this.storage=storage;this.persistent=!!storage;this.records=[];this.revision=0;this.clear();
@@ -6273,7 +6503,7 @@ function createTouchPedals(elements,{enabled,read,write,onInteract}){
 
 function startDriveline(root){
  const $=id=>root.querySelector('#'+id),$$=sel=>[...root.querySelectorAll(sel)];
- const sim=new Drivetrain();const view={mode:'transparent',e:0,targetE:0,paused:false,scale:1,camera:'overview',op:[.16,.08,.10],targetOp:[.16,.08,.10]};
+ const sim=new Drivetrain();const view={mode:'full',e:0,targetE:0,paused:false,scale:1,camera:'overview',op:[1,1,1],targetOp:[1,1,1]};
  let storage=null;try{storage=window.localStorage;}catch{}
  const race=new AccelerationChallenge(storage);let touch=null,mobile=false,playMode='free',releaseDriver=false;
  function deviceLayout(){
@@ -6284,27 +6514,28 @@ function startDriveline(root){
  }
  deviceLayout();window.addEventListener('resize',deviceLayout);window.visualViewport?.addEventListener('resize',deviceLayout);
  const scene=new THREE.Scene();scene.background=new THREE.Color(0x101923);scene.fog=new THREE.FogExp2(0x101923,.017);
- const viewport=$('scene'),renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.32;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;viewport.appendChild(renderer.domElement);renderer.domElement.setAttribute('aria-label','3D 引擎、離合器、變速箱、終傳與前輪');
- const camera=new THREE.PerspectiveCamera(36,1,.1,180);const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.075;controls.minDistance=.6;controls.maxDistance=100;controls.maxPolarAngle=Math.PI*.48;
+ const viewport=$('scene'),renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.32;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;viewport.appendChild(renderer.domElement);renderer.domElement.setAttribute('aria-label','3D 後置後驅跑車、原作 V8、離合器與六速手排');
+ const camera=new THREE.PerspectiveCamera(36,1,.015,250);const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.075;controls.minDistance=.12;controls.maxDistance=100;controls.maxPolarAngle=Math.PI*.48;
  const environment=new RoomEnvironment(),pmrem=new THREE.PMREMGenerator(renderer);scene.environment=pmrem.fromScene(environment,.04).texture;scene.environmentIntensity=1.05;environment.dispose();pmrem.dispose();
  scene.add(new THREE.HemisphereLight(0xcde7f6,0x263343,2));const key=new THREE.DirectionalLight(0xffecd4,3.8);key.position.set(-5,12,6);key.castShadow=true;key.shadow.mapSize.set(1024,1024);key.shadow.camera.left=-12;key.shadow.camera.right=12;key.shadow.camera.top=10;key.shadow.camera.bottom=-10;key.shadow.bias=-.001;scene.add(key);const fill=new THREE.DirectionalLight(0x8cc8ed,2.1);fill.position.set(7,5,-5);scene.add(fill);const rim=new THREE.DirectionalLight(0xd4e8ff,1.2);rim.position.set(2,4,10);scene.add(rim);
- const floor=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.MeshStandardMaterial({color:0x111c27,metalness:.15,roughness:.82}));floor.rotation.x=-Math.PI/2;floor.position.y=-.015;floor.receiveShadow=true;scene.add(floor);const grid=new THREE.GridHelper(80,80,0x304252,0x1c2a38);grid.position.y=-.005;scene.add(grid);
- const {engine,trans,link}=mountDriveline(scene);
+ const {engine,trans,link,powerRoot,vehicle}=mountDriveline(scene);
+ const ground=createGround(scene);ground.setMode('grassland');
  const engineSettings={cylinder:1,cutaway:false,turboCutaway:false,airflow:'particles',headOpacity:.16,turboOpacity:.22,pipeOpacity:.32,quality:'high'};
- const presets={overview:{pos:new THREE.Vector3(15,12,22),target:new THREE.Vector3(-.8,1.35,0)},clutch:{pos:new THREE.Vector3(-.8,3.0,3.0),target:new THREE.Vector3(-1.8,1.9,0)},final:{pos:new THREE.Vector3(5.8,3.5,5),target:new THREE.Vector3(2.6,1.2,1.2)}};
+ const powerPoint=(x,y,z)=>powerRoot.localToWorld(new THREE.Vector3(x,y,z));
+ const presets={overview:{pos:new THREE.Vector3(5,3.2,6.8),target:new THREE.Vector3(0,.62,0)},clutch:{pos:powerPoint(-.8,3.0,3.0),target:powerPoint(-1.8,1.9,0)},final:{pos:powerPoint(5.8,3.5,5),target:powerPoint(2.6,1.2,1.2)},exhaust:{pos:new THREE.Vector3(2.7,1.4,-4.4),target:new THREE.Vector3(0,.35,-1.65)}};
  const engineCameras=['pistons','valves','timing','turbo','airflow'];
  for(const k of engineCameras)presets[k]=engine.cameraPreset(k);
- for(const k of ['synchro','reverse'])presets[k]={pos:trans.presets[k].pos.clone().multiplyScalar(.62).add(trans.root.position),target:trans.presets[k].target.clone().multiplyScalar(.62).add(trans.root.position)};
+ for(const k of ['synchro','reverse'])presets[k]={pos:trans.root.localToWorld(trans.presets[k].pos.clone()),target:trans.root.localToWorld(trans.presets[k].target.clone())};
  let cameraFlight=null;
- function cameraTo(k,instant=false){let p=engineCameras.includes(k)?engine.cameraPreset(k):presets[k];if(!p)return;if(k==='synchro'){const g=sim.s.shift.to!=='N'?sim.s.shift.to:sim.s.gear;const x=['1','2'].includes(g)?1.34:['5','6'].includes(g)?-1.24:.06;const offset=new THREE.Vector3((x+.55)*.62,0,0);p={pos:p.pos.clone().add(offset),target:p.target.clone().add(offset)};}view.camera=k;const pos=p.pos.clone();
+ function cameraTo(k,instant=false){let p=engineCameras.includes(k)?engine.cameraPreset(k):presets[k];if(!p)return;if(k==='synchro'){const g=sim.s.shift.to!=='N'?sim.s.shift.to:sim.s.gear;const x=['1','2'].includes(g)?1.34:['5','6'].includes(g)?-1.24:.06;const offset=new THREE.Vector3((x+.55)*.62*CAR.powerScale,0,0);p={pos:p.pos.clone().add(offset),target:p.target.clone().add(offset)};}view.camera=k;const pos=p.pos.clone();
  if(k==='overview'){
   const direction=pos.clone().sub(p.target).normalize(),right=new THREE.Vector3().crossVectors(new THREE.Vector3(0,1,0),direction).normalize(),up=new THREE.Vector3().crossVectors(direction,right);
   const aspect=viewport.clientWidth/Math.max(1,viewport.clientHeight),tanY=Math.tan(camera.fov*Math.PI/360)*(mobile?.92:.82),tanX=Math.tan(camera.fov*Math.PI/360)*aspect*.90;
-  const lo=view.targetE>0?[-12,-3,-7]:[-9.3,0,-5.1],hi=view.targetE>0?[10,8,7]:[6.8,4.4,3.2];let distance=0;
+  const lo=view.targetE>0?[-2.3,-.4,-3.5]:[-1.18,0,-2.45],hi=view.targetE>0?[2.3,3.6,3.4]:[1.18,1.4,2.45];let distance=0;
   for(const x of [lo[0],hi[0]])for(const y of [lo[1],hi[1]])for(const z of [lo[2],hi[2]]){const q=new THREE.Vector3(x,y,z).sub(p.target);distance=Math.max(distance,Math.abs(q.dot(right))/tanX+q.dot(direction),Math.abs(q.dot(up))/tanY+q.dot(direction));}
-  pos.copy(p.target).addScaledVector(direction,Math.max(15,distance));
+  pos.copy(p.target).addScaledVector(direction,Math.max(5,distance));
  }else if(mobile){const aspect=viewport.clientWidth/Math.max(1,viewport.clientHeight);pos.sub(p.target).multiplyScalar(Math.max(1,1/aspect)).add(p.target);}
- if(instant){camera.position.copy(pos);controls.target.copy(p.target);cameraFlight=null;}else cameraFlight={t:0,pos:camera.position.clone(),target:controls.target.clone(),end:pos,goal:p.target};$$('[data-camera]').forEach(b=>{b.classList.toggle('selected',b.dataset.camera===k);if(b.dataset.camera===k)$('camera-name').textContent=b.textContent;});$('view-label').textContent={overview:'完整動力總成',pistons:'滑塊曲柄 · 四行程',valves:'四凸輪軸 · 32 汽門',turbo:'雙渦輪 · 廢氣旁通閥',airflow:'進氣／排氣 · 原作流道',timing:'正時鏈條 · 2:1',clutch:'乾式單片離合器',synchro:'同步器與撥叉',reverse:'倒檔惰輪',final:'4.10 終傳 · 開放式差速器'}[k];if(k!=='overview'&&view.mode==='full')setMode('transparent');}
+ if(instant){camera.position.copy(pos);controls.target.copy(p.target);cameraFlight=null;}else cameraFlight={t:0,pos:camera.position.clone(),target:controls.target.clone(),end:pos,goal:p.target};$$('[data-camera]').forEach(b=>{b.classList.toggle('selected',b.dataset.camera===k);if(b.dataset.camera===k)$('camera-name').textContent=b.textContent;});$('view-label').textContent={overview:'AUREL R8 · 後置後驅',pistons:'滑塊曲柄 · 四行程',valves:'四凸輪軸 · 32 汽門',turbo:'雙渦輪 · 廢氣旁通閥',airflow:'進氣／排氣 · 原作流道',timing:'正時鏈條 · 2:1',clutch:'乾式單片離合器',synchro:'同步器與撥叉',reverse:'倒檔惰輪',final:'4.10 終傳 · 後輪驅動',exhaust:'雙支路排氣 · 觸媒與消音器'}[k];if(k!=='overview'&&['full','bodyglass'].includes(view.mode))setMode('transparent');}
  controls.addEventListener('start',()=>{cameraFlight=null;dismissPauseNotice();});
  function resize(){const w=Math.max(1,viewport.clientWidth),h=Math.max(1,viewport.clientHeight);camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);cameraTo(view.camera,true);}
  new ResizeObserver(resize).observe(viewport);resize();cameraTo('overview',true);
@@ -6321,9 +6552,10 @@ function startDriveline(root){
  }
  let freezeSnapshot=null,lastRestoration=null;
  const stateSignature=()=>JSON.stringify(sim.s);
- const modelSignature=()=>[...engine.signature(),...trans.signature(),...link.signature()];
- function syncModels(){engine.update(sim.s,view.e,view.op[0],engineSettings);trans.update(sim.s,view.e,view.op[2],view.op[1]);link.update(sim.s,view.e,view.mode==='full'?1:.14,view.op[1]);}
- function setMode(mode){if(mode==='exploded'&&!frozen()){race.practice('拆解觀察');syncModels();freezeSnapshot={physics:stateSignature(),models:modelSignature()};lastRestoration=null;}view.mode=mode;view.targetE=mode==='exploded'?1:0;view.targetOp=mode==='full'?[1,1,1]:mode==='exploded'?[.50,.4,.40]:['engine-opacity','clutch-opacity','trans-opacity'].map(id=>Number($(id).value)/100);$$('[data-mode]').forEach(b=>b.classList.toggle('selected',b.dataset.mode===mode));if(mode==='exploded'){touch?.releaseAll();cameraTo('overview');}}
+ const modelSignature=()=>[...engine.signature(),...trans.signature(),...link.signature(),...vehicle.signature(),...ground.signature()];
+ function syncModels(){const opaque=['full','bodyglass'].includes(view.mode);engine.update(sim.s,view.e,view.op[0],opaque?{...engineSettings,cutaway:false,turboCutaway:false,headOpacity:1,turboOpacity:1,pipeOpacity:1,airflow:'off'}:engineSettings);trans.update(sim.s,view.e,view.op[2],view.op[1]);link.update(sim.s,view.e,opaque?1:.14,view.op[1]);vehicle.update(sim.s,view.e,view.mode);ground.update(sim.s,view.e);}
+ function setMode(mode){if(mode==='exploded'&&!frozen()){race.practice('拆解觀察');syncModels();freezeSnapshot={physics:stateSignature(),models:modelSignature()};lastRestoration=null;}view.mode=mode;$('mobile-view-mode').value=mode;view.targetE=mode==='exploded'?1:0;view.targetOp=['full','bodyglass'].includes(mode)?[1,1,1]:mode==='exploded'?[.50,.4,.40]:['engine-opacity','clutch-opacity','trans-opacity'].map(id=>Number($(id).value)/100);$$('[data-mode]').forEach(b=>b.classList.toggle('selected',b.dataset.mode===mode));if(mode==='exploded'){touch?.releaseAll();cameraTo('overview');}}
+ $('mobile-view-mode').onchange=()=>setMode($('mobile-view-mode').value);
  $$('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));$$('[data-camera]').forEach(b=>b.onclick=()=>{cameraTo(b.dataset.camera);dismissPauseNotice();if(mobile)$('camera-menu').open=false;});
  ['engine-opacity','clutch-opacity','trans-opacity'].forEach((id,i)=>$(id).oninput=()=>{if(view.mode!=='transparent')setMode('transparent');view.targetOp[i]=+$(id).value/100;});
  function observeEngine(){
@@ -6336,15 +6568,15 @@ function startDriveline(root){
    engineSettings.pipeOpacity=+$('pipe-opacity').value/100;
    engineSettings.quality=$('quality').value;
    engine.configure(engineSettings);
-   if(view.mode==='full')setMode('transparent');
+   if(['full','bodyglass'].includes(view.mode))setMode('transparent');
    if(view.camera==='valves')cameraTo('valves');
  }
  for(const id of ['cylinder-select','cylinder-cutaway','turbo-cutaway','airflow-mode','head-opacity','turbo-opacity','pipe-opacity','quality'])$(id).oninput=observeEngine;
- $('body-toggle').onchange=()=>link.body.visible=$('body-toggle').checked;$('road-toggle').onchange=()=>link.road.visible=$('road-toggle').checked;
+ $('ground-mode').onchange=()=>ground.setMode($('ground-mode').value);
  let demo=null;const outcomes={};
  function cancelDemo(){if(demo){demo=null;$('cancel-demo').hidden=true;$$('[data-demo]').forEach(b=>b.classList.remove('selected'));$('demo-report').textContent='已接手，現在可自行駕駛。';}}
  $('cancel-demo').onclick=cancelDemo;
- function reset(){cancelDemo();race.finish('重置');race.clear();touch?.reset();releaseDriver=false;controlled.clear();held.clear();sim.reset();view.paused=false;view.scale=1;$('timescale').value=$('mobile-timescale').value='1';acc=0;view.e=0;view.targetE=0;freezeSnapshot=null;setMode('transparent');dismissPauseNotice();updatePauseNotice();cameraTo('overview');}
+ function reset(){cancelDemo();race.finish('重置');race.clear();touch?.reset();releaseDriver=false;controlled.clear();held.clear();sim.reset();view.paused=false;view.scale=1;$('timescale').value=$('mobile-timescale').value='1';acc=0;view.e=0;view.targetE=0;freezeSnapshot=null;setMode('full');dismissPauseNotice();updatePauseNotice();cameraTo('overview');}
  $('reset').onclick=reset;
  $('ignition').onclick=()=>{cancelDemo();if(!frozen())sim.ignition();};$('pause').onclick=()=>{view.paused=!view.paused;if(view.paused){race.practice('暫停');touch?.releaseAll();}};
  function timeScale(value){view.scale=+value;$('timescale').value=$('mobile-timescale').value=value;acc=0;if(view.scale!==1)race.practice('慢動作');}
@@ -6353,7 +6585,7 @@ function startDriveline(root){
  for(const name of ['clutch','brake','throttle']){$(name).oninput=()=>{cancelDemo();if(!frozen())sim.s[name]=+$(name).value/100;};}
  const held=new Set(),controlled=new Set(),mapping={KeyW:'throttle',ArrowUp:'throttle',KeyS:'brake',ArrowDown:'brake',KeyC:'clutch',ShiftLeft:'clutch',ShiftRight:'clutch'};
  root.addEventListener('pointerdown',()=>{root.dataset.focused='1';});
- window.addEventListener('keydown',e=>{if(!root.isConnected||$('help').open||['SELECT','TEXTAREA'].includes(e.target.tagName))return;const p=mapping[e.code];if(p){e.preventDefault();cancelDemo();held.add(e.code);controlled.add(p);return;}if(e.repeat)return;if(e.code==='Enter')$('ignition').click();else if(e.code==='KeyP')$('pause').click();else if(/^Digit[1-6]$/.test(e.code)){cancelDemo();if(!frozen())sim.requestGear(e.code.slice(-1));}else if(e.code==='KeyN'||e.code==='KeyR'){cancelDemo();if(!frozen())sim.requestGear(e.code.slice(-1));}});
+ window.addEventListener('keydown',e=>{if(!root.isConnected||$('help').open||(['SELECT','TEXTAREA'].includes(e.target.tagName)||e.target.isContentEditable||e.target.tagName==='INPUT'&&e.target.type!=='range'))return;const p=mapping[e.code];if(p){e.preventDefault();cancelDemo();held.add(e.code);controlled.add(p);return;}if(e.repeat)return;if(e.code==='KeyD'||e.code==='KeyA'){e.preventDefault();cancelDemo();if(!frozen())sim.requestSequential(e.code==='KeyD'?1:-1);}else if(e.code==='Enter')$('ignition').click();else if(e.code==='KeyP')$('pause').click();else if(/^Digit[1-6]$/.test(e.code)){cancelDemo();if(!frozen())sim.requestGear(e.code.slice(-1));}else if(e.code==='KeyN'||e.code==='KeyR'){cancelDemo();if(!frozen())sim.requestGear(e.code.slice(-1));}});
  window.addEventListener('keyup',e=>held.delete(e.code));
  function interruptControls(){race.practice('切離畫面');touch?.releaseAll();held.clear();if(!frozen()){sim.s.throttle=0;sim.s.brake=0;}else releaseDriver=true;controlled.clear();}
  window.addEventListener('blur',interruptControls);document.addEventListener('visibilitychange',()=>{if(document.hidden)interruptControls();});
@@ -6383,7 +6615,7 @@ function startDriveline(root){
  stage(5,()=>{data.a=sim.s.v*3.6;sim.s=structuredClone(data.base);sim.s.clutch=1;sim.s.throttle=0;$('demo-report').textContent=`02 · 帶檔 5 秒降至 ${data.a.toFixed(1)} km/h。恢復相同起點，離合器分離滑行 5 秒。`;}),
  stage(5,()=>{data.b=sim.s.v*3.6;sim.s.brake=1;$('demo-report').textContent=`02 · 滑行後 ${data.b.toFixed(1)} km/h；現在腳煞車停車。`;}),
  stage(0,()=>finishDemo(2,data.a<data.b&&sim.s.v===0,`同為 40 km/h，5 秒後：帶檔 ${data.a.toFixed(1)}、滑行 ${data.b.toFixed(1)} km/h；腳煞車停至 0.0 km/h。`))];}
- if(id===3){seedMoving(24,'2');cameraTo('overview');link.body.visible=true;$('body-toggle').checked=true;stages=[
+ if(id===3){seedMoving(24,'2');cameraTo('overview');stages=[
  stage(1.4,()=>{sim.s.clutch=1;data.original=sim.s.gear;data.lock=!sim.requestGear('R')&&sim.s.gear===data.original;$('demo-report').textContent='03 · 向前行進時選 R：「請先停車」，維持 2 檔。';}),
  stage(2,()=>{sim.s.brake=1;}),
  stage(2,()=>{sim.requestGear('R');cameraTo('reverse');$('demo-report').textContent='03 · 車輛停穩、離合器分離，倒檔惰輪滑入接合。';}),
@@ -6422,6 +6654,7 @@ function startDriveline(root){
  $('engine-power').textContent=Math.max(0,s.enginePower).toFixed(0);
  $('turbo-rpm').textContent=fmt(s.turboRpmL)+' / '+fmt(s.turboRpmR);
  $('tcs').textContent=s.tractionControl?'循跡介入':'循跡待命';$('tcs').classList.toggle('active',s.tractionControl);
+ $('clutch-detail').hidden=view.camera!=='clutch';$('clutch-detail').textContent=`分離叉 → 分離軸承 · 踏板 ${Math.round(s.clutch*100)}% · 滑差 ${fmt(Math.abs(s.clutchSlip))} rpm`;
  const c=engine.cylinderState();$('cylinder-panel').hidden=!['pistons','valves'].includes(view.camera);
  $('cylinder-detail').textContent=`第 ${c.cylinder} 缸 · ${c.strokeName} · ${c.localDeg.toFixed(1)}°`;
  $('valve-detail').textContent=`進氣 ${(c.intakeLift*100).toFixed(0)}% · 排氣 ${(c.exhaustLift*100).toFixed(0)}%`;
@@ -6453,7 +6686,7 @@ function startDriveline(root){
  }acc-=fixedDt;}
  }else acc=0;
  if(cameraFlight){const f=cameraFlight;f.t=Math.min(1,f.t+dt*1.8);const t=f.t*f.t*(3-2*f.t);camera.position.lerpVectors(f.pos,f.end,t);controls.target.lerpVectors(f.target,f.goal,t);if(f.t===1)cameraFlight=null;}
- controls.update();syncModels();updatePauseNotice(now);floor.visible=view.e===0;grid.visible=view.e===0;renderer.render(scene,camera);uiTime+=dt;if(uiTime>.08){ui();uiTime=0;}renderCount++;if(renderCount===3)root.dataset.ready='true';
+ controls.update();syncModels();updatePauseNotice(now);renderer.render(scene,camera);uiTime+=dt;if(uiTime>.08){ui();uiTime=0;}renderCount++;if(renderCount===3)root.dataset.ready='true';
  }
  requestAnimationFrame(frame);
 }
