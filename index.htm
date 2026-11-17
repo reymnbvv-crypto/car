@@ -1990,83 +1990,468 @@ const PAINTS=[
 ];
 
 
-// Rear haunch height is retained. Only the descent into the cabin is shallower.
-const BODY_SECTIONS=[[-2.32,.78,.57,.70],[-2.02,.98,.76,.86],[-1.22,1.04,.83,1.00],[-.68,.94,.79,.93],[.60,.92,.71,.73],[1.40,.98,.77,.71],[1.95,.94,.63,.62],[2.32,.77,.47,.47]];
-const BODY_SLOPES=BODY_SECTIONS.map((a,i)=>[1,2,3].map(k=>{
+// Stations are [Z, half-width, shoulder height, centre height] in metres.
+// The existing wheel centres and the two exhaust outlets locate the shell.
+const BODY_SECTIONS=[
+ [-2.30,.926,.673,.690],[-2.17,.974,.722,.738],[-1.99,1.012,.783,.804],
+ [-1.68,1.046,.800,.886],[-1.22,1.064,.830,1.000],[-.68,.976,.791,.904],
+ [-.45,.945,.762,.782],[.05,.931,.754,.764],[.58,.936,.754,.770],
+ [.99,.957,.758,.777],[1.27,.989,.785,.787],[1.45,1.002,.781,.760],
+ [1.73,.982,.735,.705],[1.93,.950,.690,.657],[2.055,.919,.679,.640],
+ [2.18,.884,.618,.596],[2.25,.831,.576,.563]
+];
+const BODY_SLOPES=BODY_SECTIONS.map((station,i)=>[1,2,3].map(k=>{
  const left=BODY_SECTIONS[Math.max(0,i-1)],right=BODY_SECTIONS[Math.min(BODY_SECTIONS.length-1,i+1)];
- if(i===0)return (right[k]-a[k])/(right[0]-a[0]);
- if(i===BODY_SECTIONS.length-1)return (a[k]-left[k])/(a[0]-left[0]);
- const h0=a[0]-left[0],h1=right[0]-a[0],d0=(a[k]-left[k])/h0,d1=(right[k]-a[k])/h1;
- if(d0*d1<=0)return 0;
- return 3*(h0+h1)/((2*h1+h0)/d0+(h1+2*h0)/d1);
+ if(i===0)return (right[k]-station[k])/(right[0]-station[0]);
+ if(i===BODY_SECTIONS.length-1)return (station[k]-left[k])/(station[0]-left[0]);
+ const h0=station[0]-left[0],h1=right[0]-station[0];
+ const d0=(station[k]-left[k])/h0,d1=(right[k]-station[k])/h1;
+ return d0*d1<=0?0:3*(h0+h1)/((2*h1+h0)/d0+(h1+2*h0)/d1);
 }));
-// Bring back the earlier headlamp shoulder's shallow S curve. Both adjoining
-// spans share this tangent, so the front fender eases into the lamp and nose
-// without the old per-section flat spots or a kink in the body surface.
-BODY_SLOPES[6][0]*=.50;
-BODY_SLOPES[6][1]*=.25;
-BODY_SLOPES[6][2]*=.25;
-function bodyHermite(a,b,ma,mb,t){return (2*t**3-3*t*t+1)*a+(t**3-2*t*t+t)*ma+(-2*t**3+3*t*t)*b+(t**3-t*t)*mb;}
-function bodySection(z){
- let i=1;while(i<BODY_SECTIONS.length-1&&z>BODY_SECTIONS[i][0])i++;
- const a=BODY_SECTIONS[i-1],b=BODY_SECTIONS[i],h=b[0]-a[0],t=THREE.MathUtils.clamp((z-a[0])/h,0,1);
- return [0,1,2].map(k=>bodyHermite(a[k+1],b[k+1],BODY_SLOPES[i-1][k]*h,BODY_SLOPES[i][k]*h,t));
-}
-function bodyTop(u,z){const [w,h,c]=bodySection(z);return new THREE.Vector3(u*w,h+(c-h)*Math.pow(Math.max(0,1-u*u),.7),z);}
-const CABIN_LIMITS={rearRoof:-.48,rearDeck:-.94,frontRoof:.45,frontDeck:1.22};
 
-function createCabin(parent,paint,glass,trim){
+const {clamp:coachClamp,lerp,smoothstep}=THREE.MathUtils;
+const hermite=(a,b,ma,mb,t)=>(2*t**3-3*t*t+1)*a+(t**3-2*t*t+t)*ma+(-2*t**3+3*t*t)*b+(t**3-t*t)*mb;
+function bodySection(z){
+ const i=BODY_SECTIONS.findIndex((s,k)=>k>0&&z<=s[0]);
+ const end=i<0?BODY_SECTIONS.length-1:i;
+ const a=BODY_SECTIONS[end-1],b=BODY_SECTIONS[end],h=b[0]-a[0],t=coachClamp((z-a[0])/h,0,1);
+ return [0,1,2].map(k=>hermite(a[k+1],b[k+1],BODY_SLOPES[end-1][k]*h,BODY_SLOPES[end][k]*h,t));
+}
+function bodyTop(u,z){
+ const [w,h,c]=bodySection(z);
+ return new THREE.Vector3(u*w,h+(c-h)*(1-u*u),z);
+}
+
+const CABIN_LIMITS={rearRoof:-.51,rearDeck:-1.99,frontRoof:.45,frontDeck:1.22};
+const BODY_LIMITS={front:2.25,rear:-2.30,rocker:.157};
+const WHEEL_OPENINGS=[
+ {z:CAR.rearZ,radius:.382,linerX:CAR.rearTrack/2+.049},
+ {z:CAR.frontZ,radius:.371,linerX:CAR.frontTrack/2+.040}
+];
+const rockerBottom=z=>BODY_LIMITS.rocker+.032*(1-smoothstep(z,BODY_LIMITS.rear,-1.67));
+function wheelArch(z){
+ for(const opening of WHEEL_OPENINGS){
+  const d=Math.abs(z-opening.z);
+  if(d<=opening.radius)return CAR.wheelRadius+Math.sqrt(Math.max(0,opening.radius**2-d*d));
+ }
+ return rockerBottom(z);
+}
+
+function coachMesh(parent,geometry,material,name){
+ const mesh=new THREE.Mesh(geometry,material);
+ mesh.name=name;
+ mesh.castShadow=true;
+ mesh.receiveShadow=true;
+ parent.add(mesh);
+ return mesh;
+}
+function coachSurface(parent,material,name,point,{u0=0,u1=1,v0=0,v1=1,nu=16,nv=20,flip=false,smooth=false}={}){
+ const positions=[],indices=[],normals=[];
+ const n=new THREE.Vector3();
+ for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++){
+  const u=lerp(u0,u1,i/nu),v=lerp(v0,v1,j/nv);
+  positions.push(...point(u,v).toArray());
+  if(smooth){
+   const du=point(u+.00001,v).sub(point(u-.00001,v));
+   const dv=point(u,v+.00001).sub(point(u,v-.00001));
+   normals.push(...n.crossVectors(dv,du).normalize().multiplyScalar(flip?-1:1).toArray());
+  }
+ }
+ for(let j=0;j<nv;j++)for(let i=0;i<nu;i++){
+  const a=j*(nu+1)+i,b=a+1,c=a+nu+1,d=c+1;
+  if(flip)indices.push(a,b,c,b,d,c);
+  else indices.push(a,c,b,b,c,d);
+ }
+ const geometry=new THREE.BufferGeometry();
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ geometry.setIndex(indices);
+ if(smooth)geometry.setAttribute('normal',new THREE.Float32BufferAttribute(normals,3));
+ else geometry.computeVertexNormals();
+ return coachMesh(parent,geometry,material,name);
+}
+function coachPlinth(parent,material,name,size,position){
+ const mesh=coachMesh(parent,new THREE.BoxGeometry(...size),material,name);
+ mesh.position.set(...position);
+ return mesh;
+}
+function coachProfile(parent,material,name,vertices,depth,bevel){
+ const shape=new THREE.Shape(vertices.map(([x,y])=>new THREE.Vector2(x,y)));
+ const geometry=new THREE.ExtrudeGeometry(shape,{
+  depth,bevelEnabled:bevel>0,bevelSize:bevel,bevelThickness:bevel,bevelSegments:2,curveSegments:12
+ });
+ geometry.translate(0,0,-depth/2);
+ return coachMesh(parent,geometry,material,name);
+}
+function coachBead(parent,material,name,points,radius){
+ const path=new THREE.CurvePath();
+ for(let i=1;i<points.length;i++)path.add(new THREE.LineCurve3(points[i-1],points[i]));
+ return coachMesh(parent,new THREE.TubeGeometry(path,Math.max(24,points.length*2),radius,6,false),material,name);
+}
+function coachSamples(fn,count){
+ return Array.from({length:count+1},(_,i)=>fn(i/count));
+}
+function coachBetween(parent,material,name,size,position,angle=0){
+ const mesh=coachPlinth(parent,material,name,size,position);
+ mesh.rotation.x=angle;
+ return mesh;
+}
+
+function createWedgeCabin(parent,{paint,glass,black,grille}){
+ const {rearRoof,rearDeck,frontRoof,frontDeck}=CABIN_LIMITS;
  const panels=[],windows=[],seams=[];
- const roof=(u,v)=>new THREE.Vector3(u*.65,1.30-.045*u*u,CABIN_LIMITS.rearRoof+(CABIN_LIMITS.frontRoof-CABIN_LIMITS.rearRoof)*v);
- function ramp(z0,z1){return (u,v)=>{
-  const a=roof(u,z0===CABIN_LIMITS.rearRoof?0:1),b=bodyTop(u,z1),eps=.0001;
-  const slope=bodyTop(u,z1+eps).sub(bodyTop(u,z1-eps)).multiplyScalar((z1-z0)/(2*eps));
-  return new THREE.Vector3(bodyHermite(a.x,b.x,0,slope.x,v),bodyHermite(a.y,b.y,0,slope.y,v),z0+(z1-z0)*v);
- };}
- const rear=ramp(CABIN_LIMITS.rearRoof,CABIN_LIMITS.rearDeck),front=ramp(CABIN_LIMITS.frontRoof,CABIN_LIMITS.frontDeck);
- function side(sign){return (u,t)=>{
-  const B=bodyTop(sign,CABIN_LIMITS.rearDeck+(CABIN_LIMITS.frontDeck-CABIN_LIMITS.rearDeck)*u),T=roof(sign,u);
-  const L=rear(sign,1-t),R=front(sign,1-t),P=B.multiplyScalar(1-t).addScaledVector(T,t).addScaledVector(L,1-u).addScaledVector(R,u);
-  for(const [weight,p] of [[(1-u)*(1-t),rear(sign,1)],[(1-u)*t,rear(sign,0)],[u*(1-t),front(sign,1)],[u*t,front(sign,0)]])P.addScaledVector(p,-weight);
-  return P;
- };}
- const left=side(1),right=side(-1);
- function patch(fn,u0,u1,v0,v1,material,name,nu=24,nv=20){
-  const p=[],idx=[];for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++)p.push(...fn(u0+(u1-u0)*i/nu,v0+(v1-v0)*j/nv).toArray());
-  for(let j=0;j<nv;j++)for(let i=0;i<nu;i++){const a=j*(nu+1)+i,b=a+1,c=a+nu+1,d=c+1;idx.push(a,c,b,b,c,d);}
-  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setIndex(idx);g.computeVertexNormals();
-  // Adjacent patches use the same analytic normals, eliminating lighting seams.
-  const normal=g.attributes.normal,epsilon=.00005;
-  for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++){
-   const u=u0+(u1-u0)*i/nu,v=v0+(v1-v0)*j/nv;
-   const du=fn(Math.min(u+epsilon,1),v).sub(fn(Math.max(u-epsilon,-1),v));
-   const dv=fn(u,Math.min(v+epsilon,1)).sub(fn(u,Math.max(v-epsilon,0)));
-   const n=dv.cross(du).normalize();normal.setXYZ(j*(nu+1)+i,n.x,n.y,n.z);
+ const roof=(u,v)=>{
+  const width=.646+.024*Math.sin(Math.PI*v)+.007*(1-v);
+  const y=1.247-.037*u*u-.012*((v-.46)/.54)**2;
+  return new THREE.Vector3(u*width,y,lerp(rearRoof,frontRoof,v));
+ };
+ function ramp(u,v,rearward){
+  const a=roof(u,rearward?0:1),z1=rearward?rearDeck:frontDeck;
+  const b=bodyTop(u,z1),span=z1-a.z;
+  const slope=bodyTop(u,z1+.0001).sub(bodyTop(u,z1-.0001)).multiplyScalar(span/.0002);
+  const x=hermite(a.x,b.x,u*(rearward?.22:.43),slope.x,v);
+  const y=hermite(a.y,b.y,rearward?-.26:-.24,slope.y,v);
+  return new THREE.Vector3(x,y,lerp(a.z,z1,v));
+ }
+ const rear=(u,v)=>ramp(u,v,true),front=(u,v)=>ramp(u,v,false);
+ function side(sign,z,t){
+  const shoulder=bodyTop(sign,z);
+  let rail;
+  if(z<rearRoof)rail=rear(sign,(z-rearRoof)/(rearDeck-rearRoof));
+  else if(z>frontRoof)rail=front(sign,(z-frontRoof)/(frontDeck-frontRoof));
+  else rail=roof(sign,(z-rearRoof)/(frontRoof-rearRoof));
+  return shoulder.lerp(rail,t);
+ }
+ const sideFromSpan=sign=>(u,v)=>side(sign,lerp(rearDeck,frontDeck,u),v);
+ const left=sideFromSpan(1),right=sideFromSpan(-1);
+ function patch(fn,material,name,range){
+  const mesh=coachSurface(parent,material,name,fn,{smooth:true,...range});
+  if(material===glass)windows.push(mesh);
+  else if(material===paint)panels.push(mesh);
+  else seams.push(mesh);
+ }
+ patch(roof,paint,'淺弧雙門車頂',{u0:-1,u1:1,nu:40,nv:24});
+
+ // The glass and its four surround strips tessellate the very same windshield.
+ const glassEdge={left:-.865,right:.865,top:.095,bottom:.88};
+ for(const [v0,v1,name] of [[0,.061,'前擋車頂接邊'],[.927,1,'前擋基座鈑件']]){
+  patch(front,paint,name,{u0:-1,u1:1,v0,v1,nu:40,nv:5});
+ }
+ for(const [u0,u1,name] of [[-1,-.916,'右 A 柱'],[.916,1,'左 A 柱']]){
+  patch(front,paint,name,{u0,u1,v0:.061,v1:.927,nu:6,nv:30});
+ }
+ for(const [u0,u1,v0,v1] of [
+  [-.916,.916,.061,glassEdge.top],[-.916,.916,glassEdge.bottom,.927],
+  [-.916,glassEdge.left,glassEdge.top,glassEdge.bottom],
+  [glassEdge.right,.916,glassEdge.top,glassEdge.bottom]
+ ]){
+  patch(front,black,'前擋黑色膠框',{u0,u1,v0,v1,nu:24,nv:24});
+ }
+ patch(front,glass,'傾斜前擋玻璃',{
+  u0:glassEdge.left,u1:glassEdge.right,v0:glassEdge.top,v1:glassEdge.bottom,nu:38,nv:32
+ });
+
+ // The sloping lid forms a continuous skin under the raised black louvres.
+ const lidLimit=.72;
+ patch(rear,paint,'左後窗柱與引擎蓋肩',{u0:lidLimit,u1:1,flip:true,nu:12,nv:40});
+ patch(rear,paint,'右後窗柱與引擎蓋肩',{u0:-1,u1:-lidLimit,flip:true,nu:12,nv:40});
+ patch(rear,paint,'車頂後緣鈑件',{u0:-lidLimit,u1:lidLimit,v1:.13,flip:true,nu:32,nv:8});
+ patch(rear,grille,'斜背百葉底板',{u0:-lidLimit,u1:lidLimit,v0:.13,v1:.985,flip:true,nu:32,nv:40});
+ patch(rear,paint,'尾蓋接邊',{u0:-lidLimit,u1:lidLimit,v0:.985,flip:true,nu:32,nv:4});
+ for(let i=0;i<7;i++){
+  const start=.158+i*.110,end=start+.085;
+  const fin=(u,v)=>rear(u,lerp(start,end,v)).add(new THREE.Vector3(0,lerp(.008,.046,v),0));
+  patch(fin,grille,'引擎蓋階梯百葉',{u0:-.689,u1:.689,flip:true,nu:24,nv:5});
+  const lip=(u,v)=>rear(u,end).add(new THREE.Vector3(0,lerp(.006,.046,v),0));
+  patch(lip,black,'百葉下緣內折',{u0:-.689,u1:.689,nu:24,nv:2});
+  for(const sign of [-1,1]){
+   const endCap=(u,v)=>rear(sign*.689,lerp(start,end,u))
+    .add(new THREE.Vector3(0,lerp(.005,lerp(.008,.046,u),v),0));
+   patch(endCap,grille,'百葉側封邊',{flip:sign<0,nu:6,nv:2});
   }
-  const mesh=new THREE.Mesh(g,material);mesh.name=name;mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);
-  (material===glass?windows:panels).push(mesh);return mesh;
  }
- function seal(fn,u0,u1,v0,v1){
-  const edges=[t=>fn(u0+(u1-u0)*t,v0),t=>fn(u1,v0+(v1-v0)*t),t=>fn(u1-(u1-u0)*t,v1),t=>fn(u0,v1-(v1-v0)*t)];
-  const points=[];for(const edge of edges)for(let i=0;i<24;i++)points.push(edge(i/24));points.push(points[0].clone());
-  const curve=new THREE.CurvePath();for(let i=1;i<points.length;i++)curve.add(new THREE.LineCurve3(points[i-1],points[i]));
-  const bead=new THREE.Mesh(new THREE.TubeGeometry(curve,192,.006,8,false),trim);bead.name='嵌入式窗框密封條';parent.add(bead);seams.push(bead);
-  // An inward return gives each window opening a real, 12 mm deep edge.
-  for(const edge of edges){const p=[],idx=[];for(let i=0;i<=24;i++){const q=edge(i/24);p.push(q.x,q.y,q.z,q.x*.992,q.y-.012,q.z);}
-   for(let i=0;i<24;i++){const a=i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2);}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setIndex(idx);g.computeVertexNormals();
-   const rim=new THREE.Mesh(g,paint);rim.name='窗框內折邊';parent.add(rim);panels.push(rim);
-  }
+
+ function sideBand(sign,z0,z1,bottom,top,material,name){
+  const fn=(u,v)=>{
+   const z=lerp(z0,z1,u);
+   return side(sign,z,lerp(bottom(z),top(z),v));
+  };
+  patch(fn,material,name,{flip:sign<0,nu:Math.max(8,Math.ceil((z1-z0)*34)),nv:8});
  }
- function framed(fn,umin,umax,win0,win1,v0,v1,label){
-  patch(fn,umin,umax,0,v0,paint,label+'上框');patch(fn,umin,umax,v1,1,paint,label+'下框');
-  patch(fn,umin,win0,v0,v1,paint,label+'左柱');patch(fn,win1,umax,v0,v1,paint,label+'右柱');
-  patch(fn,win0,win1,v0,v1,glass,label+'玻璃');seal(fn,win0,win1,v0,v1);
+ const fixed=n=>()=>n;
+ for(const sign of [-1,1]){
+  const bands=(z0,z1,rows)=>rows.forEach(([a,b,m,n])=>sideBand(sign,z0,z1,a,b,m,n));
+  const lower=fixed(.098),upper=fixed(.862),rail=fixed(.93),base=fixed(0),top=fixed(1);
+  const quarterTop=z=>lerp(.26,.862,smoothstep(z,-.689,-.413));
+  bands(rearDeck,-.745,[
+   [base,fixed(.067),paint,'後肩上緣'],[fixed(.067),rail,black,'斜背黑色三角飾板'],[rail,top,paint,'斜背上緣鈑件']
+  ]);
+  bands(-.745,-.689,[[base,top,paint,'後側窗 C 柱']]);
+  bands(-.689,-.362,[
+   [base,lower,black,'後側窗下框'],[lower,quarterTop,glass,'三角後側窗'],
+   [quarterTop,rail,black,'三角後側窗上框'],[rail,top,paint,'後側窗車頂邊']
+  ]);
+  bands(-.362,-.303,[[base,rail,black,'直立 B 柱'],[rail,top,paint,'車頂側邊']]);
+  bands(-.303,1.044,[
+   [base,lower,black,'門窗下沿'],[lower,upper,glass,'雙門側窗'],
+   [upper,rail,black,'側窗上框'],[rail,top,paint,'車頂側邊']
+  ]);
+  bands(1.044,frontDeck,[[base,top,paint,'前側窗尖角與前葉子板接合']]);
  }
- patch(roof,-1,1,0,1,paint,'連續弧面車頂',32,36);
- framed(rear,-1,1,-.76,.76,.12,.82,'後窗與 C 柱');
- framed(front,-1,1,-.86,.86,.10,.88,'前擋與 A 柱');
- framed(left,0,1,.19,.95,.07,.94,'左側窗');framed(right,0,1,.19,.95,.07,.94,'右側窗');
  return {panels,windows,seams,roof,rear,front,left,right};
+}
+
+function sidePoint(sign,z,y,offset=0){
+ const [w,h]=bodySection(z);
+ const floor=rockerBottom(z),t=coachClamp((y-floor)/(h-floor),0,1);
+ const inset=.056*(1-t)**2+.011*Math.sin(Math.PI*t)-.008*Math.sin(2*Math.PI*t)*Math.sin(Math.PI*t);
+ return new THREE.Vector3(sign*(w-inset+offset),y,z);
+}
+function createWedgeSide(parent,sign,{paint,black,grille,bright,amber}){
+ const bounds=BODY_LIMITS;
+ function sideSpan(zAt,yAt,count){
+  coachSurface(parent,paint,'門板及輪拱外鈑件',(u,v)=>{
+   const z=zAt(u),y=lerp(yAt(u),bodySection(z)[1],v);
+   return sidePoint(sign,z,y);
+  },{flip:sign<0,nu:count,nv:16});
+ }
+ let start=bounds.rear;
+ for(const opening of WHEEL_OPENINGS){
+  const {z,radius,linerX}=opening,edge=z-radius;
+  const spanStart=start;
+  sideSpan(t=>lerp(spanStart,edge,t),t=>rockerBottom(lerp(spanStart,edge,t)),32);
+  const theta=t=>Math.PI*(t-.5);
+  const archZ=t=>z+radius*Math.sin(theta(t));
+  const archY=t=>CAR.wheelRadius+radius*Math.cos(theta(t));
+  sideSpan(archZ,archY,64);
+  // Shape the wheelhouse like the tyre's swept volume, with a 15 mm radial gap.
+  const innerRadius=CAR.wheelRadius+.015;
+  const archLip=(u,v)=>{
+   const p=sidePoint(sign,archZ(u),archY(u)),r=lerp(radius,innerRadius,v);
+   return new THREE.Vector3(lerp(p.x,sign*linerX,v),CAR.wheelRadius+r*Math.cos(theta(u)),z+r*Math.sin(theta(u)));
+  };
+  coachSurface(parent,black,'黑色輪拱內襯',archLip,{nu:64,nv:5,flip:sign<0});
+  const line=coachSamples(t=>sidePoint(sign,archZ(t),archY(t)+.004,.0015),72);
+  coachBead(parent,paint,'輪拱倒角',line,.007);
+  for(const direction of [-1,1]){
+   const end=z+direction*radius;
+   coachSurface(parent,black,'輪拱前後內襯',(u,v)=>{
+    const y=lerp(rockerBottom(end),CAR.wheelRadius,u),p=sidePoint(sign,end,y);
+    return new THREE.Vector3(lerp(p.x,sign*linerX,v),y,z+direction*lerp(radius,innerRadius,v));
+   },{nu:10,nv:4,flip:sign<0});
+  }
+  start=z+radius;
+ }
+ sideSpan(t=>lerp(start,bounds.front,t),t=>rockerBottom(lerp(start,bounds.front,t)),36);
+
+ const skirtRear=CAR.rearZ+WHEEL_OPENINGS[0].radius+.013;
+ const skirtFront=CAR.frontZ-WHEEL_OPENINGS[1].radius-.012;
+ const skirt=(u,v)=>sidePoint(sign,lerp(skirtRear,skirtFront,u),lerp(.145,.237,v),lerp(.004,.014,v));
+ coachSurface(parent,black,'黑色門檻與側裙',skirt,{flip:sign<0,nu:54,nv:6});
+ coachSurface(parent,grille,'側裙上緣折面',(u,v)=>sidePoint(sign,lerp(skirtRear,skirtFront,u),.237,lerp(.014,0,v)),{
+  flip:sign<0,nu:54,nv:2
+ });
+
+ const leading=t=>sidePoint(sign,lerp(.915,1.065,t),lerp(.222,bodySection(1.065)[1],t),.002);
+ const trailing=t=>sidePoint(sign,lerp(-.56,-.38,t),lerp(.223,bodySection(-.38)[1],t),.002);
+ const doorBottom=t=>sidePoint(sign,lerp(-.56,.915,t),.222,.002);
+ for(const fn of [leading,trailing,doorBottom])coachBead(parent,black,'門板收邊細縫',coachSamples(fn,32),.0025);
+ coachBead(parent,grille,'側身折線',coachSamples(t=>sidePoint(sign,lerp(-.84,1.024,t),.437,.003),56),.0028);
+ coachBead(parent,grille,'尾保桿側面接縫',coachSamples(t=>sidePoint(sign,lerp(bounds.rear,-1.611,t),.401,.001),26),.0028);
+ coachBead(parent,grille,'前保桿側面接縫',coachSamples(t=>sidePoint(sign,lerp(1.782,bounds.front,t),.372,.001),22),.0026);
+
+ coachPlinth(parent,black,'嵌入式門把底座',[.029,.052,.156],sidePoint(sign,-.245,.687,.008).toArray());
+ coachPlinth(parent,bright,'矩形門把',[.017,.028,.088],sidePoint(sign,-.259,.693,.023).toArray());
+ const filler=coachMesh(parent,new THREE.CylinderGeometry(.040,.040,.009,36),black,'油箱蓋密封圈');
+ filler.rotation.z=Math.PI/2;
+ filler.position.copy(sidePoint(sign,-.68,.714,.004));
+ const fillerLid=coachMesh(parent,new THREE.CylinderGeometry(.036,.036,.009,36),paint,'圓形油箱蓋');
+ fillerLid.rotation.z=Math.PI/2;
+ fillerLid.position.copy(sidePoint(sign,-.68,.714,.0095));
+ coachPlinth(parent,black,'前葉子板側標底座',[.018,.044,.106],sidePoint(sign,1.944,.567,.007).toArray());
+ coachPlinth(parent,amber,'琥珀色側標燈',[.012,.026,.089],sidePoint(sign,1.944,.568,.018).toArray());
+ coachPlinth(parent,black,'前輪拱後方飾件',[.019,.079,.043],sidePoint(sign,1.002,.447,.005).toArray());
+
+ const mirror=coachMesh(parent,new THREE.SphereGeometry(1,32,18),black,'黑色後視鏡殼');
+ mirror.position.set(sign*.962,.864,.808);
+ mirror.scale.set(.097,.058,.082);
+ const mount=coachProfile(parent,black,'後視鏡三角座',[[0,0],[.117,0],[.048,.101]],.023,.006);
+ mount.rotation.y=-Math.PI/2;
+ mount.position.set(sign*.903,.758,.836);
+ const face=coachMesh(parent,new THREE.SphereGeometry(1,24,14),bright,'後視鏡鏡面');
+ face.position.set(sign*.967,.864,.742);
+ face.scale.set(.070,.041,.013);
+}
+
+function createWedgeNose(parent,{paint,black,grille,headLight,amber}){
+ const {front}=BODY_LIMITS;
+ coachSurface(parent,paint,'低扁楔形前蓋',(u,v)=>bodyTop(u,lerp(CABIN_LIMITS.frontDeck,front,v)),{
+  u0:-1,u1:1,nu:44,nv:48,smooth:true
+ });
+ const face=(u,v)=>{
+  const p=bodyTop(u,front);
+  p.y=lerp(.157,p.y,v);
+  p.x=u*sidePoint(1,front,p.y).x;
+  p.z+=.037*(1-u*u)*Math.sin(Math.PI*v);
+  return p;
+ };
+ coachSurface(parent,paint,'車頭包角與保桿',face,{u0:-1,u1:1,nu:44,nv:22,flip:true});
+ const bumperSeam=t=>{
+  const u=2*t-1,y=.372,v=(y-.157)/(bodyTop(u,front).y-.157);
+  return face(u,v).add(new THREE.Vector3(0,0,.0015));
+ };
+ coachBead(parent,grille,'前保桿水平接縫',coachSamples(bumperSeam,42),.0026);
+ const lip=(u,v)=>{
+  const x=u*(.821+.018*v);
+  const z=front-.181+v*(.226-.028*u*u);
+  return new THREE.Vector3(x,lerp(.143,.132,v)+.009*u*u,z);
+ };
+ coachSurface(parent,paint,'外伸貼地前唇',lip,{u0:-1,u1:1,nu:36,nv:10});
+ coachSurface(parent,black,'前唇下緣',(u,v)=>lip(u,1).add(new THREE.Vector3(0,-.031*v,0)),{
+  u0:-1,u1:1,nu:36,nv:2,flip:true
+ });
+ coachBetween(parent,black,'低位進氣口',[1.13,.133,.040],[0,.272,front+.030],-.11);
+ coachBetween(parent,grille,'進氣口橫柵',[1.10,.015,.036],[0,.279,front+.055],-.11);
+ for(let i=-6;i<=6;i++){
+  coachBetween(parent,grille,'進氣格柵直葉',[.011,.109,.017],[i*.086,.272,front+.054],-.11);
+ }
+
+ for(const sign of [-1,1]){
+  const bonnetSeam=t=>bodyTop(sign*lerp(.81,.90,t),lerp(1.246,2.19,t)).add(new THREE.Vector3(0,.0012,0));
+  coachBead(parent,grille,'前蓋側邊接縫',coachSamples(bonnetSeam,32),.0021);
+  const centre=sign*.592,back=1.773,tip=2.110;
+  function lampSkin(u,v){
+   const z=lerp(back,tip,v),x=centre+u*lerp(.153,.166,v),p=bodyTop(x/bodySection(z)[0],z);
+   p.y+=lerp(.012,.118,v)+.008*(1-u*u);
+   return p;
+  }
+  coachSurface(parent,paint,'微掀跳燈外蓋',lampSkin,{u0:-1,u1:1,nu:16,nv:22,smooth:true});
+  for(const edge of [-1,1]){
+   coachSurface(parent,black,'跳燈外殼側壁',(u,v)=>{
+    const p=lampSkin(edge,u);
+    p.y=lerp(bodyTop(p.x/bodySection(p.z)[0],p.z).y-.002,p.y,v);
+    return p;
+   },{flip:edge>0,nu:18,nv:3});
+  }
+  coachSurface(parent,black,'跳燈後部鉸接收邊',(u,v)=>{
+   const p=lampSkin(u,0);
+   p.y=lerp(bodyTop(p.x/bodySection(p.z)[0],p.z).y-.002,p.y,v);
+   return p;
+  },{u0:-1,u1:1,nu:18,nv:3});
+  coachSurface(parent,black,'跳燈正面燈座',(u,v)=>{
+   const p=lampSkin(u,1);
+   p.y=lerp(bodyTop(p.x/bodySection(p.z)[0],p.z).y-.002,p.y,v);
+   return p;
+  },{u0:-1,u1:1,nu:20,nv:6,flip:true});
+  const height=lampSkin(0,1).y-.066;
+  const lamp=coachProfile(parent,headLight,'跳燈矩形燈面',[
+   [-.129,-.031],[.129,-.031],[.14,-.020],[.14,.020],[.129,.031],[-.129,.031],[-.14,.02],[-.14,-.02]
+  ],.013,.003);
+  lamp.position.set(centre,height,tip+.008);
+  for(let i=-5;i<=5;i++)coachPlinth(parent,grille,'燈面折射刻紋',[.0018,.052,.003],[centre+i*.022,height,tip+.017]);
+  coachPlinth(parent,black,'前方向燈黑框',[.173,.049,.016],[sign*.670,.275,front+.013]);
+  coachPlinth(parent,amber,'前保桿方向燈',[.151,.029,.017],[sign*.670,.275,front+.024]);
+ }
+}
+
+function createWedgeTail(parent,{paint,black,grille,rearLight,reverse,amber},exhaustBranches){
+ const {rear}=BODY_LIMITS,bumperBottom=rockerBottom(rear),bumperTop=.401;
+ coachSurface(parent,paint,'後甲板',(u,v)=>bodyTop(u,lerp(rear,CABIN_LIMITS.rearDeck,v)),{
+  u0:-1,u1:1,nu:44,nv:24,smooth:true
+ });
+ coachSurface(parent,paint,'方正後尾板',(u,v)=>{
+  const p=bodyTop(u,rear);
+  p.y=lerp(bumperTop,p.y,v);
+  p.x=u*sidePoint(1,rear,p.y).x;
+  return p;
+ },{u0:-1,u1:1,nu:44,nv:16});
+ coachPlinth(parent,black,'橫向黑色尾燈台',[1.69,.142,.020],[0,.526,rear-.009]);
+ coachPlinth(parent,grille,'車牌凹座',[.339,.085,.024],[0,.523,rear-.023]);
+ coachPlinth(parent,black,'車牌底板',[.270,.056,.007],[0,.523,rear-.040]);
+ for(const sign of [-1,1]){
+  coachPlinth(parent,rearLight,'長方形尾燈',[.44,.086,.029],[sign*.558,.541,rear-.026]);
+  coachPlinth(parent,amber,'尾端方向燈',[.151,.086,.031],[sign*.710,.541,rear-.028]);
+  coachPlinth(parent,reverse,'倒車燈',[.143,.052,.031],[sign*.262,.540,rear-.029]);
+  for(let i=0;i<3;i++)coachPlinth(parent,black,'尾燈水平分紋',[.425,.0026,.005],[sign*.548,.515+i*.025,rear-.043]);
+ }
+
+ const bumperEdge=(side,t)=>{
+  const y=lerp(bumperBottom,bumperTop,t),p=sidePoint(side,rear,y);
+  return new THREE.Vector2(p.x,y);
+ };
+ const bumper=new THREE.Shape([
+  ...coachSamples(t=>bumperEdge(-1,t),12),...coachSamples(t=>bumperEdge(1,1-t),12)
+ ]);
+ const outletRadius=.064;
+ for(const branch of exhaustBranches){
+  const tangent=branch.curve.getTangent(1);
+  const centre=branch.end.clone().addScaledVector(tangent,(rear-branch.end.z)/tangent.z);
+  bumper.holes.push(new THREE.Path().absarc(centre.x,centre.y,outletRadius,0,Math.PI*2,true));
+  const bezel=coachMesh(parent,new THREE.RingGeometry(outletRadius,.080,48),grille,'尾管通孔包邊');
+  bezel.position.set(centre.x,centre.y,rear-.002);
+  bezel.rotation.y=Math.PI;
+ }
+ const bumperSkin=coachMesh(parent,new THREE.ShapeGeometry(bumper,48),paint,'具雙尾管開孔的後保桿');
+ bumperSkin.position.z=rear;
+ const seamWidth=sidePoint(1,rear,bumperTop).x;
+ coachBead(parent,grille,'尾保桿水平接縫',coachSamples(t=>new THREE.Vector3(lerp(-seamWidth,seamWidth,t),bumperTop,rear-.001),24),.0028);
+ const lowerTrim=(u,v)=>new THREE.Vector3(u*sidePoint(1,rear,bumperBottom).x,lerp(.165,bumperBottom,v),rear-.004*(1-u*u));
+ coachSurface(parent,black,'後保桿下緣',lowerTrim,{u0:-1,u1:1,nu:32,nv:3});
+
+ for(const sign of [-1,1]){
+  const upright=coachProfile(parent,paint,'高尾翼三角側板',[
+   [-1.887,.780],[-2.029,.855],[-2.262,1.148],[-2.301,1.151],[-2.274,1.036],[-2.266,.715]
+  ],.048,.008);
+  upright.geometry.rotateY(-Math.PI/2);
+  upright.position.x=sign*.863;
+  const shoe=coachPlinth(parent,paint,'尾翼支座底腳',[.128,.031,.265],[sign*.863,.769,-2.029]);
+  shoe.rotation.x=-.20;
+ }
+ const wing=coachProfile(parent,paint,'一體式高尾翼翼面',[
+  [-2.283,1.087],[-2.212,1.090],[-2.097,1.051],[-2.070,1.035],[-2.098,1.027],[-2.204,1.050],[-2.285,1.075]
+ ],1.70,.009);
+ wing.geometry.rotateY(-Math.PI/2);
+ return {bumperSkin,outletRadius};
+}
+
+function createWedgeUndertray(parent,material,z0,z1){
+ coachSurface(parent,material,'低位車底護板',(u,v)=>{
+  const z=lerp(z0,z1,v);
+  const frontEdge=smoothstep(z,1.92,BODY_LIMITS.front),rearEdge=1-smoothstep(z,BODY_LIMITS.rear,-2.045);
+  const wheelRoom=Math.min(...WHEEL_OPENINGS.map(({z:axle})=>smoothstep(Math.abs(z-axle),.21,.43)));
+  const width=Math.min(bodySection(z)[0]-.047,lerp(.606,.922,wheelRoom));
+  return new THREE.Vector3(u*width,.059+.090*frontEdge+.077*rearEdge,z);
+ },{u0:-1,u1:1,nu:28,nv:Math.ceil((z1-z0)*52),flip:true,smooth:true});
+}
+
+function createCoachwork(exterior,materials,exhaustBranches,register){
+ const black=new THREE.MeshStandardMaterial({color:0x121417,metalness:.19,roughness:.44,side:THREE.DoubleSide});
+ const grille=new THREE.MeshStandardMaterial({color:0x222428,metalness:.28,roughness:.51,side:THREE.DoubleSide});
+ const bright=new THREE.MeshStandardMaterial({color:0xa9b2b8,metalness:.86,roughness:.21});
+ const amber=new THREE.MeshStandardMaterial({color:0xe19132,roughness:.27,emissive:0x7b3f10,emissiveIntensity:.47});
+ const headLight=new THREE.MeshPhysicalMaterial({
+  color:0xefe4c9,roughness:.23,metalness:.27,clearcoat:.84,emissive:0xffd5a2,emissiveIntensity:.68
+ });
+ const m={...materials,black,grille,bright,amber,headLight};
+ function panelGroup(name,motion){
+  const group=new THREE.Group();
+  group.name=name;
+  exterior.add(group);
+  register(group,motion);
+  return group;
+ }
+ const nose=panelGroup('前蓋與車頭鈑件',[0,1.12,.58]);
+ const cabin=panelGroup('車頂、車窗與斜背百葉',[0,2.16,0]);
+ const tail=panelGroup('後保桿、尾燈與尾翼',[0,1.17,-.59]);
+ for(const sign of [-1,1]){
+  const side=panelGroup(sign>0?'左側鈑件':'右側鈑件',[sign*1.08,.15,0]);
+  createWedgeSide(side,sign,m);
+ }
+ createWedgeNose(nose,m);
+ const greenhouse=createWedgeCabin(cabin,m);
+ const rear=createWedgeTail(tail,m,exhaustBranches);
+ const undertray=panelGroup('底部護板',[0,-.43,0]);
+ createWedgeUndertray(undertray,grille,BODY_LIMITS.rear,BODY_LIMITS.front);
+ return {cabin:greenhouse,rear};
 }
 
 function createEngine(parentScene){
@@ -6488,7 +6873,7 @@ function createRunningGear(root,chassis,wheels,link,reg){
 }
 
 
-// Coupé body with open wheel arches and a closed, framed glazed cabin.
+// Original running gear and cabin beneath the independently mounted coachwork.
 function createVehicle(scene,engine,link){
  const root=new THREE.Group();root.name='AUREL R8 · 後置後驅';scene.add(root);
  const exterior=new THREE.Group(),interior=new THREE.Group(),chassis=new THREE.Group();root.add(exterior,interior,chassis);
@@ -6496,7 +6881,7 @@ function createVehicle(scene,engine,link){
  const ghostPaint=paint.clone();ghostPaint.transparent=true;ghostPaint.depthWrite=false;ghostPaint.opacity=.16;
  paint.name='不透明車漆';ghostPaint.name='觀察模式車漆';let activePaint=paint;
  const carbon=new THREE.MeshStandardMaterial({color:0x17212a,metalness:.48,roughness:.45,side:THREE.DoubleSide});
- const windowMat=new THREE.MeshPhysicalMaterial({color:0x23434f,metalness:.25,roughness:.10,transparent:true,opacity:.40,depthWrite:false,side:THREE.DoubleSide});
+ const windowMat=new THREE.MeshPhysicalMaterial({color:0x343d46,metalness:.25,roughness:.10,transparent:true,opacity:.40,depthWrite:false,side:THREE.DoubleSide});
  const trim=new THREE.MeshStandardMaterial({color:0x080f15,metalness:.25,roughness:.4});
  const silver=new THREE.MeshStandardMaterial({color:0xb1bac4,metalness:.9,roughness:.23});
  const bronze=new THREE.MeshStandardMaterial({color:0xa5916b,metalness:.88,roughness:.25});
@@ -6504,7 +6889,6 @@ function createVehicle(scene,engine,link){
  const leather=new THREE.MeshStandardMaterial({color:0x28343e,roughness:.78,side:THREE.DoubleSide});
  const belt=new THREE.MeshStandardMaterial({color:0xc1734e,roughness:.8});
  const brakeMat=new THREE.MeshStandardMaterial({color:0xde653d,metalness:.45,roughness:.3});
- const light=new THREE.MeshStandardMaterial({color:0xdcf5ff,emissive:0xb3deff,emissiveIntensity:2.4,roughness:.2});
  const rearLight=new THREE.MeshStandardMaterial({color:0xca2935,emissive:0xd91624,emissiveIntensity:.6,roughness:.22});
  const reverseMat=new THREE.MeshStandardMaterial({color:0x52606a,emissive:0x000000,roughness:.2});
  const exp=[],wheels=[],rotors=[],calipers=[],frontInspectionMaterials=[];
@@ -6516,46 +6900,6 @@ function createVehicle(scene,engine,link){
  function tube(points,r,m,parent=root){return mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)),false,'catmullrom',.06),Math.max(12,points.length*6),r,8,false),m,[0,0,0],parent);}
  function beam(a,b,r,m,parent=root){const start=new THREE.Vector3(...a),end=new THREE.Vector3(...b),delta=end.clone().sub(start);const o=mesh(new THREE.CylinderGeometry(r,r,delta.length(),12),m,start.add(end).multiplyScalar(.5).toArray(),parent);o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());return o;}
  function ring(ro,ri,h,m,p,parent){const s=new THREE.Shape();s.absarc(0,0,ro,0,Math.PI*2,false);s.holes.push(new THREE.Path().absarc(0,0,ri,0,Math.PI*2,true));const g=new THREE.ExtrudeGeometry(s,{depth:h,bevelEnabled:false,curveSegments:40});g.translate(0,0,-h/2);g.rotateY(Math.PI/2);return mesh(g,m,p,parent);}
- function surface(fn,nu,nv,m,parent){const p=[],idx=[];for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++)p.push(...fn(i/nu,j/nv));for(let j=0;j<nv;j++)for(let i=0;i<nu;i++){const a=j*(nu+1)+i,b=a+1,c=a+nu+1,d=c+1;idx.push(a,c,b,b,c,d);}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setIndex(idx);g.computeVertexNormals();return mesh(g,m,[0,0,0],parent);}
- const section=bodySection;
- function arch(z){let y=.18;for(const axle of [CAR.frontZ,CAR.rearZ]){const d=z-axle;if(Math.abs(d)<.385)y=Math.max(y,CAR.wheelRadius+Math.sqrt(.385*.385-d*d));}return y;}
- const bonnet=new THREE.Group(),deck=new THREE.Group(),roof=new THREE.Group();exterior.add(bonnet,deck,roof);reg(bonnet,[0,1.2,.5]);reg(deck,[0,1.3,-.6]);reg(roof,[0,2.2,0]);
- for(const [z0,z1,parent] of [[CABIN_LIMITS.frontDeck,2.32,bonnet],[-2.32,CABIN_LIMITS.rearDeck,deck]])surface((u,v)=>{const z=z0+(z1-z0)*v,[w,h,c]=section(z),x=(u*2-1)*w;return [x,h+(c-h)*Math.pow(Math.max(0,1-(x/w)**2),.7),z];},32,48,paint,parent);
- const sides=[];
- for(const sign of [-1,1]){
-  const side=new THREE.Group();exterior.add(side);sides.push(side);reg(side,[sign*1.05,.15,0]);
-  surface((u,v)=>{const z=-2.32+4.64*v,[w,h]=section(z),bottom=arch(z),y=bottom+(h-bottom)*u;return [sign*(w-.035*Math.sin(u*Math.PI)),y,z];},8,240,paint,side);
-
-  for(const axle of [CAR.frontZ,CAR.rearZ]){const points=[];for(let i=0;i<=48;i++){const a=i/48*Math.PI;const z=axle+.386*Math.cos(a),[w]=section(z);points.push([sign*(w+.003),CAR.wheelRadius+.386*Math.sin(a),z]);}tube(points,.012,paint,side);}
-  tube([[sign*.94,.20,-.66],[sign*.93,.19,.15],[sign*.94,.21,.92]],.035,carbon,side);
-  tube([[1.04,section(1.04)[1]],[.94,.24],[-.58,.21],[-.61,section(-.61)[1]]].map(([z,y])=>[sign*(section(z)[0]+.003),y,z]),.004,trim,side);
-  box([.014,.028,.16],silver,[sign*(section(-.34)[0]+.004),.69,-.34],side);
-  const intake=box([.028,.19,.32],trim,[sign*.957,.58,-.63],side);intake.rotation.x=-.15;
-  for(let i=0;i<4;i++)box([.035,.012,.25],carbon,[sign*.975,.515+i*.04,-.63],side);
-  beam([sign*.78,.79,.57],[sign*1.04,.87,.61],.018,trim,side);
-  const mirror=mesh(new THREE.SphereGeometry(1,24,14),paint,[sign*1.055,.88,.62],side);mirror.scale.set(.11,.055,.09);
-  const mirrorFace=box([.13,.055,.008],silver,[sign*1.06,.88,.53],side);
-
- }
- const cabin=createCabin(roof,paint,windowMat,trim);
- // Sculpted nose, rear fascia, splitters and open tailpipe apertures.
- for(const [z,sign,parent,y0] of [[2.32,1,bonnet,.20],[-2.32,-1,deck,.38]])surface((u,v)=>{const [w,h,c]=section(z),x=(u*2-1)*w,top=h+(c-h)*Math.pow(Math.max(0,1-(x/w)**2),.7);return [x,y0+(top-y0)*v,z];},32,8,paint,parent);
- box([1.55,.035,.30],carbon,[0,.16,2.12],bonnet);box([1.10,.15,.035],trim,[0,.32,2.28],bonnet);
- for(let i=-5;i<=5;i++)box([.012,.13,.045],carbon,[i*.092,.32,2.30],bonnet);
- for(const sign of [-1,1]){
-  const lamp=box([.36,.085,.05],trim,[sign*.64,.535,2.18],bonnet);lamp.rotation.y=sign*.18;
-  const led=box([.32,.014,.055],light,[sign*.64,.56,2.21],bonnet);led.rotation.y=sign*.18;
-  const led2=box([.23,.011,.055],light,[sign*.67,.522,2.208],bonnet);led2.rotation.y=sign*.18;
-  box([.30,.12,.035],trim,[sign*.86,.25,-2.22],deck);
-  box([.13,.023,.03],reverseMat,[sign*.54,.54,-2.338],deck);
-  box([.54,.023,.035],rearLight,[sign*.48,.59,-2.338],deck);
- }
- box([.94,.14,.05],carbon,[0,.23,-2.28],deck);box([1.55,.03,.37],carbon,[0,.14,-2.13],deck);
- for(let i=-2;i<=2;i++)box([.014,.12,.34],carbon,[i*.17,.17,-2.16],deck);
- box([1.46,.022,.16],carbon,[0,.875,-2.01],deck);
- for(const sign of [-1,1])box([.035,.08,.06],carbon,[sign*.52,.82,-2.01],deck);
- // Rear engine cover: airflow slots above the intact V8.
- for(let i=0;i<7;i++){const z=-1.86+i*.085,[,h,c]=section(z);box([.83,.012,.026],trim,[0,c+.008,z],deck);}
  // Floor and frame; no rear caster or display stand remains.
  const floor=box([1.45,.07,1.88],carbon,[0,.20,-.04],chassis);reg(floor,[0,-.30,0]);
 
@@ -6591,8 +6935,9 @@ function createVehicle(scene,engine,link){
  }
  const runningGear=createRunningGear(root,chassis,wheels,link,reg),{shafts,stubs}=runningGear;
  const exhaust=createExhaust(scene,engine);
+ const coachwork=createCoachwork(exterior,{paint,glass:windowMat,rearLight,reverse:reverseMat},exhaust.branches,reg);
  const paintedParts=[];exterior.traverse(o=>{if(o.isMesh&&o.material===paint)paintedParts.push(o);});
- return {root,exterior,interior,chassis,wheels,shafts,stubs,runningGear,exhaust,get paint(){return activePaint;},paintedParts,paintMaterials:[paint,ghostPaint],windowMat,section,arch,cabin,dashboard,cabinLever,setPaint,get paintId(){return paintId;},frontInspectionMaterials,reverseMat,rearLight,
+ return {root,exterior,interior,chassis,wheels,shafts,stubs,runningGear,exhaust,get paint(){return activePaint;},paintedParts,paintMaterials:[paint,ghostPaint],windowMat,section:bodySection,arch:wheelArch,cabin:coachwork.cabin,coachwork,dashboard,cabinLever,setPaint,get paintId(){return paintId;},frontInspectionMaterials,reverseMat,rearLight,
  update(s,explosion,mode,frontInspection=false){const f=explosion*explosion*(3-2*explosion);for(const p of exp)p.o.position.copy(p.base).addScaledVector(p.v,f);
   exterior.visible=mode!=='transparent';const opacity=mode==='bodyglass'?.16:mode==='exploded'?.52:1;
   // Keep opaque and transparent shader/render-pass state on separate materials.
