@@ -285,7 +285,7 @@ html:has(#driveline-app[data-fullscreen=true]){overflow:hidden}
 <div id="driveline-app">
 <header class="topbar"><div class="brand"><span class="brand-icon">D<span>∕</span></span><div><b>DRIVELINE</b><span>手排動力實驗室</span></div></div><div class="header-right"><span class="build-label">AUREL R8 <i>·</i> RR / 6MT</span><select id="play-mode" aria-label="遊玩模式"><option value="free">自由駕駛</option><option value="challenge">加速挑戰</option></select><button id="race-start" hidden>開始挑戰</button><button id="more-toggle" aria-controls="inspection-panel" aria-expanded="false">面板</button><button id="help-toggle" class="quiet">操作說明</button><button id="reset" class="quiet">重置</button></div></header>
 <section class="stage" aria-label="可旋轉縮放的 3D 動力系統">
-<div class="scene-top"><div class="scene-caption"><span class="eyebrow">REAR ENGINE / REAR DRIVE</span><span id="view-label">AUREL R8 · 後置後驅</span></div><div class="view-modes" aria-label="顯示模式"><button data-mode="full" class="selected">完整車輛</button><button data-mode="bodyglass">車殼透明</button><button data-mode="transparent">機構透明</button><button data-mode="exploded">拆解</button></div><select id="mobile-view-mode" aria-label="觀察模式"><option value="full">完整車輛</option><option value="bodyglass">車殼透明</option><option value="transparent">機構透明</option><option value="exploded">拆解</option></select><select id="ground-mode" aria-label="地面模式"><option value="grassland">草原公路</option><option value="grid">網格地面</option></select></div>
+<div class="scene-top"><div class="scene-caption"><span class="eyebrow">REAR ENGINE / REAR DRIVE</span><span id="view-label">AUREL R8 · 後置後驅</span></div><div class="view-modes" aria-label="顯示模式"><button data-mode="full" class="selected">完整車輛</button><button data-mode="bodyglass">車殼透明</button><button data-mode="transparent">機構透明</button><button data-mode="exploded">拆解</button></div><select id="mobile-view-mode" aria-label="觀察模式"><option value="full">完整車輛</option><option value="bodyglass">車殼透明</option><option value="transparent">機構透明</option><option value="exploded">拆解</option></select><select id="ground-mode" aria-label="地面模式"><option value="grassland">白天公路</option><option value="night-road">夜晚公路</option><option value="grid">網格地面</option></select></div>
 <button type="button" id="camera-menu" class="camera-menu" aria-controls="camera-strip" aria-expanded="false"><span>特寫</span><span id="camera-name">總覽</span></button>
 <div class="instruments" aria-label="車速、轉速與目前檔位"><div class="speed"><div class="instrument-reading"><span id="speed">0.0</span><small>km/h</small></div><label id="direction">靜止</label></div><div class="rpm"><div class="instrument-reading"><span id="rpm">0</span><small>rpm</small></div><div class="rpm-track"><i id="rpm-bar"></i></div><label id="engine-state">引擎關閉</label></div><div class="gear-display"><small>GEAR</small><b id="gear">N</b></div></div>
 <div id="scene-frame" class="scene-frame">
@@ -2291,13 +2291,32 @@ function createWedgeSide(parent,sign,{paint,black,grille,bright,amber}){
  }
  sideSpan(t=>lerp(start,bounds.front,t),t=>rockerBottom(lerp(start,bounds.front,t)),36);
 
- const skirtRear=CAR.rearZ+WHEEL_OPENINGS[0].radius+.013;
- const skirtFront=CAR.frontZ-WHEEL_OPENINGS[1].radius-.012;
+ const rearLinerEnd=CAR.rearZ+WHEEL_OPENINGS[0].radius;
+ const frontLinerEnd=CAR.frontZ-WHEEL_OPENINGS[1].radius;
+ const skirtRear=rearLinerEnd+.013,skirtFront=frontLinerEnd-.012;
  const skirt=(u,v)=>sidePoint(sign,lerp(skirtRear,skirtFront,u),lerp(.145,.237,v),lerp(.004,.014,v));
  coachSurface(parent,black,'黑色門檻與側裙',skirt,{flip:sign<0,nu:54,nv:6});
  coachSurface(parent,grille,'側裙上緣折面',(u,v)=>sidePoint(sign,lerp(skirtRear,skirtFront,u),.237,lerp(.014,0,v)),{
   flip:sign<0,nu:54,nv:2
  });
+ function closeRocker(outerAt,segments){
+  coachSurface(parent,black,'側裙與底護板搭接折面',(u,v)=>{
+   const outer=outerAt(u),fold=outer.clone().add(new THREE.Vector3(-sign*.012,-.004,0));
+   const tray=undertrayPoint(sign,outer.z);
+   // Land inside the tray edge so the two removable panels retain a small lip.
+   tray.x=sign*Math.min(Math.abs(tray.x)-.012,Math.abs(fold.x)-.007);
+   return v<=.25?outer.lerp(fold,v*4):fold.lerp(tray,(v-.25)/.75);
+  },{flip:sign>0,nu:segments,nv:4});
+ }
+ closeRocker(u=>skirt(u,0),54);
+ for(const [linerEnd,skirtEnd] of [[rearLinerEnd,skirtRear],[frontLinerEnd,skirtFront]]){
+  const startsAtLiner=linerEnd<skirtEnd;
+  closeRocker(u=>{
+   const mix=startsAtLiner?u:1-u;
+   const z=lerp(linerEnd,skirtEnd,mix);
+   return sidePoint(sign,z,lerp(rockerBottom(z),.145,mix),.004*mix);
+  },4);
+ }
 
  const leading=t=>sidePoint(sign,lerp(.915,1.065,t),lerp(.222,bodySection(1.065)[1],t),.002);
  const trailing=t=>sidePoint(sign,lerp(-.56,-.38,t),lerp(.223,bodySection(-.38)[1],t),.002);
@@ -2331,6 +2350,7 @@ function createWedgeSide(parent,sign,{paint,black,grille,bright,amber}){
 }
 
 function createWedgeNose(parent,{paint,black,grille,headLight,amber}){
+ const lenses=[];
  const {front}=BODY_LIMITS;
  coachSurface(parent,paint,'低扁楔形前蓋',(u,v)=>bodyTop(u,lerp(CABIN_LIMITS.frontDeck,front,v)),{
   u0:-1,u1:1,nu:44,nv:48,smooth:true
@@ -2395,10 +2415,12 @@ function createWedgeNose(parent,{paint,black,grille,headLight,amber}){
    [-.129,-.031],[.129,-.031],[.14,-.020],[.14,.020],[.129,.031],[-.129,.031],[-.14,.02],[-.14,-.02]
   ],.013,.003);
   lamp.position.set(centre,height,tip+.008);
+  lenses.push(lamp);
   for(let i=-5;i<=5;i++)coachPlinth(parent,grille,'燈面折射刻紋',[.0018,.052,.003],[centre+i*.022,height,tip+.017]);
   coachPlinth(parent,black,'前方向燈黑框',[.173,.049,.016],[sign*.670,.275,front+.013]);
   coachPlinth(parent,amber,'前保桿方向燈',[.151,.029,.017],[sign*.670,.275,front+.024]);
  }
+ return lenses;
 }
 
 function createWedgeTail(parent,{paint,black,grille,rearLight,reverse,amber},exhaustBranches){
@@ -2415,8 +2437,9 @@ function createWedgeTail(parent,{paint,black,grille,rearLight,reverse,amber},exh
  coachPlinth(parent,black,'橫向黑色尾燈台',[1.69,.142,.020],[0,.526,rear-.009]);
  coachPlinth(parent,grille,'車牌凹座',[.339,.085,.024],[0,.523,rear-.023]);
  coachPlinth(parent,black,'車牌底板',[.270,.056,.007],[0,.523,rear-.040]);
+ const lenses=[];
  for(const sign of [-1,1]){
-  coachPlinth(parent,rearLight,'長方形尾燈',[.44,.086,.029],[sign*.558,.541,rear-.026]);
+  lenses.push(coachPlinth(parent,rearLight,'長方形尾燈',[.44,.086,.029],[sign*.558,.541,rear-.026]));
   coachPlinth(parent,amber,'尾端方向燈',[.151,.086,.031],[sign*.710,.541,rear-.028]);
   coachPlinth(parent,reverse,'倒車燈',[.143,.052,.031],[sign*.262,.540,rear-.029]);
   for(let i=0;i<3;i++)coachPlinth(parent,black,'尾燈水平分紋',[.425,.0026,.005],[sign*.548,.515+i*.025,rear-.043]);
@@ -2458,17 +2481,20 @@ function createWedgeTail(parent,{paint,black,grille,rearLight,reverse,amber},exh
   [-2.283,1.087],[-2.212,1.090],[-2.097,1.051],[-2.070,1.035],[-2.098,1.027],[-2.204,1.050],[-2.285,1.075]
  ],1.70,.009);
  wing.geometry.rotateY(-Math.PI/2);
- return {bumperSkin,outletRadius};
+ return {bumperSkin,outletRadius,lenses};
+}
+
+function undertrayPoint(u,z){
+ const frontEdge=smoothstep(z,1.92,BODY_LIMITS.front),rearEdge=1-smoothstep(z,BODY_LIMITS.rear,-2.045);
+ const wheelRoom=Math.min(...WHEEL_OPENINGS.map(({z:axle})=>smoothstep(Math.abs(z-axle),.21,.43)));
+ const width=Math.min(bodySection(z)[0]-.047,lerp(.606,.922,wheelRoom));
+ return new THREE.Vector3(u*width,.059+.090*frontEdge+.077*rearEdge,z);
 }
 
 function createWedgeUndertray(parent,material,z0,z1){
- coachSurface(parent,material,'低位車底護板',(u,v)=>{
-  const z=lerp(z0,z1,v);
-  const frontEdge=smoothstep(z,1.92,BODY_LIMITS.front),rearEdge=1-smoothstep(z,BODY_LIMITS.rear,-2.045);
-  const wheelRoom=Math.min(...WHEEL_OPENINGS.map(({z:axle})=>smoothstep(Math.abs(z-axle),.21,.43)));
-  const width=Math.min(bodySection(z)[0]-.047,lerp(.606,.922,wheelRoom));
-  return new THREE.Vector3(u*width,.059+.090*frontEdge+.077*rearEdge,z);
- },{u0:-1,u1:1,nu:28,nv:Math.ceil((z1-z0)*52),flip:true,smooth:true});
+ coachSurface(parent,material,'低位車底護板',(u,v)=>undertrayPoint(u,lerp(z0,z1,v)),{
+  u0:-1,u1:1,nu:28,nv:Math.ceil((z1-z0)*52),flip:true,smooth:true
+ });
 }
 
 function createCoachwork(exterior,materials,exhaustBranches,register){
@@ -2477,7 +2503,7 @@ function createCoachwork(exterior,materials,exhaustBranches,register){
  const bright=new THREE.MeshStandardMaterial({color:0xa9b2b8,metalness:.86,roughness:.21});
  const amber=new THREE.MeshStandardMaterial({color:0xe19132,roughness:.27,emissive:0x7b3f10,emissiveIntensity:.47});
  const headLight=new THREE.MeshPhysicalMaterial({
-  color:0xefe4c9,roughness:.23,metalness:.27,clearcoat:.84,emissive:0xffd5a2,emissiveIntensity:.68
+  color:0xefe4c9,roughness:.23,metalness:.27,clearcoat:.84,emissive:0xf1f5ff,emissiveIntensity:0
  });
  const m={...materials,black,grille,bright,amber,headLight};
  function panelGroup(name,motion){
@@ -2494,12 +2520,12 @@ function createCoachwork(exterior,materials,exhaustBranches,register){
   const side=panelGroup(sign>0?'左側鈑件':'右側鈑件',[sign*1.08,.15,0]);
   createWedgeSide(side,sign,m);
  }
- createWedgeNose(nose,m);
+ const headlightLenses=createWedgeNose(nose,m);
  const greenhouse=createWedgeCabin(cabin,m);
  const rear=createWedgeTail(tail,m,exhaustBranches);
  const undertray=panelGroup('底部護板',[0,-.43,0]);
  createWedgeUndertray(undertray,grille,BODY_LIMITS.rear,BODY_LIMITS.front);
- return {cabin:greenhouse,rear};
+ return {cabin:greenhouse,rear,headlightLenses};
 }
 
 function createEngine(parentScene){
@@ -7338,7 +7364,7 @@ function createVehicle(scene,engine,link){
  const leather=new THREE.MeshStandardMaterial({color:0x28343e,roughness:.78,side:THREE.DoubleSide});
  const belt=new THREE.MeshStandardMaterial({color:0xc1734e,roughness:.8});
  const brakeMat=new THREE.MeshStandardMaterial({color:0xde653d,metalness:.45,roughness:.3});
- const rearLight=new THREE.MeshStandardMaterial({color:0xca2935,emissive:0xd91624,emissiveIntensity:.6,roughness:.22});
+ const rearLight=new THREE.MeshStandardMaterial({color:0xca2935,emissive:0xd91624,emissiveIntensity:0,roughness:.22});
  const reverseMat=new THREE.MeshStandardMaterial({color:0x52606a,emissive:0x000000,roughness:.2});
  const exp=[],wheels=[],rotors=[],calipers=[],frontInspectionMaterials=[];
  let paintId='blue';
@@ -7382,9 +7408,29 @@ function createVehicle(scene,engine,link){
  const runningGear=createRunningGear(root,chassis,wheels,link,reg),{shafts,stubs}=runningGear;
  const exhaust=createExhaust(scene,engine);
  const coachwork=createCoachwork(exterior,{paint,glass:windowMat,rearLight,reverse:reverseMat},exhaust.branches,reg);
+ const headlightMaterial=coachwork.headlightLenses[0].material;
+ const headlights=coachwork.headlightLenses.map(lens=>{
+  lens.geometry.computeBoundingBox();
+  const beam=new THREE.SpotLight(0xf1f5ff,720,38,.21,.58,2);
+  beam.name='前白燈照明';
+  beam.visible=false;
+  beam.position.z=lens.geometry.boundingBox.max.z+.004;
+  beam.target.position.set(0,-.69,beam.position.z+18);
+  lens.add(beam,beam.target);
+  return beam;
+ });
+ const tailLights=coachwork.rear.lenses.map(lens=>{
+  lens.geometry.computeBoundingBox();
+  const glow=new THREE.PointLight(0xff2635,1,1.8,2);
+  glow.name='後紅燈微光';
+  glow.visible=false;
+  glow.position.z=lens.geometry.boundingBox.min.z-.004;
+  lens.add(glow);
+  return glow;
+ });
  const paintedParts=[];exterior.traverse(o=>{if(o.isMesh&&o.material===paint)paintedParts.push(o);});
  return {root,exterior,interior,chassis,wheels,shafts,stubs,runningGear,exhaust,get paint(){return activePaint;},paintedParts,paintMaterials:[paint,ghostPaint],windowMat,section:bodySection,arch:wheelArch,cabin:coachwork.cabin,coachwork,cockpit,dashboard,cabinLever,setPaint,get paintId(){return paintId;},frontInspectionMaterials,reverseMat,rearLight,
- update(s,explosion,mode,frontInspection=false){const f=explosion*explosion*(3-2*explosion);for(const p of exp)p.o.position.copy(p.base).addScaledVector(p.v,f);
+ update(s,explosion,mode,frontInspection=false,night=false){const f=explosion*explosion*(3-2*explosion);for(const p of exp)p.o.position.copy(p.base).addScaledVector(p.v,f);
   exterior.visible=mode!=='transparent';const opacity=mode==='bodyglass'?.16:mode==='exploded'?.52:1;
   // Keep opaque and transparent shader/render-pass state on separate materials.
   // Reassembly rebinds every painted panel to the opaque material and saved hue.
@@ -7397,7 +7443,11 @@ function createVehicle(scene,engine,link){
   cockpit.update(s);
   for(const w of wheels)w.rotating.rotation.x=s.aw;for(const a of shafts)a.spin.rotation.x=s.aw*a.rotationSign;for(const stub of stubs)stub.rotation.x=s.aw;
   reverseMat.color.setHex(s.gear==='R'?0xffffff:0x52606a);reverseMat.emissive.setHex(s.gear==='R'?0xdaeeff:0);reverseMat.emissiveIntensity=s.gear==='R'?2:0;
-  rearLight.emissiveIntensity=s.brake>.02?2.5:.6;
+  const brakeOn=s.brake>.02,roadLights=night&&exterior.visible&&mode!=='exploded'&&explosion===0;
+  headlightMaterial.emissiveIntensity=roadLights?3.0:0;
+  rearLight.emissiveIntensity=brakeOn?2.5:roadLights?.68:0;
+  for(const beam of headlights)beam.visible=roadLights;
+  for(const glow of tailLights){glow.visible=roadLights;glow.intensity=brakeOn?2.7:1;}
   exhaust.update(s,explosion,mode);
  },signature(){return [...wheels.map(w=>w.rotating.rotation.x),...shafts.map(a=>a.spin.rotation.x),...stubs.map(o=>o.rotation.x),cabinLever.rotation.x,cabinLever.rotation.z,...exhaust.signature()];}};
 }
@@ -7426,20 +7476,93 @@ function mountDriveline(scene) {
 }
 
 
-function createGround(scene){
+const roadLength=480,roadLevel=.002;
+const dashLength=CAR.length,dashGap=CAR.length*1.5,dashPitch=dashLength+dashGap;
+const lampPitch=40,lampOrigin=9,lampHeadX=-1.16,lampHeadY=5.825;
+const wrapCentered=(value,period)=>THREE.MathUtils.euclideanModulo(value+period/2,period)-period/2;
+
+function pavementMap(width,anisotropy){
+ const canvas=document.createElement('canvas');
+ canvas.width=canvas.height=512;
+ const ctx=canvas.getContext('2d'),size=canvas.width;
+ ctx.fillStyle='#30363a';ctx.fillRect(0,0,size,size);
+ // Low-contrast grain and paint use the same mipmapped surface.
+ for(let i=0;i<4800;i++){
+  ctx.fillStyle=i%3===0?'rgba(255,255,255,.055)':'rgba(0,0,0,.09)';
+  ctx.fillRect((i*114.763)%size,(i*172.329)%size,1+i%3,1+i%2);
+ }
+ const scale=size/width,edge=.075*scale,edgeInset=.13*scale,centerStripe=.11*scale;
+ ctx.fillStyle='#d6dcd4';
+ for(const x of [edgeInset,size-edgeInset])ctx.fillRect(x-edge/2,0,edge,size);
+ ctx.fillStyle='#e8bd44';
+ const dashPixels=size*dashLength/dashPitch;
+ ctx.fillRect((size-centerStripe)/2,(size-dashPixels)/2,centerStripe,dashPixels);
+ const map=new THREE.CanvasTexture(canvas);
+ map.colorSpace=THREE.SRGBColorSpace;
+ map.wrapT=THREE.RepeatWrapping;
+ map.minFilter=THREE.LinearMipmapLinearFilter;
+ map.anisotropy=anisotropy;
+ map.repeat.y=roadLength/dashPitch;
+ return map;
+}
+
+function createStreetLamp(lens){
+ const fixture=new THREE.Group();
+ fixture.name='對向側路燈';
+ const post=new THREE.MeshStandardMaterial({color:0x657079,metalness:.47,roughness:.62});
+ const housing=new THREE.MeshStandardMaterial({color:0x3d474f,metalness:.24,roughness:.65});
+ function part(geometry,material,x,y){
+  const mesh=new THREE.Mesh(geometry,material);
+  mesh.position.set(x,y,0);
+  fixture.add(mesh);
+  return mesh;
+ }
+ part(new THREE.CylinderGeometry(.112,.155,.23,10),housing,0,.115);
+ part(new THREE.CylinderGeometry(.042,.086,5.42,10),post,0,2.83);
+ const arm=new THREE.CatmullRomCurve3([
+  new THREE.Vector3(0,5.48,0),new THREE.Vector3(-.11,5.71,0),
+  new THREE.Vector3(-.38,5.86,0),new THREE.Vector3(-.94,5.88,0)
+ ]);
+ part(new THREE.TubeGeometry(arm,14,.040,8,false),post,0,0);
+ part(new THREE.BoxGeometry(.58,.116,.235),housing,lampHeadX,5.89);
+ part(new THREE.BoxGeometry(.49,.018,.167),lens,lampHeadX,lampHeadY).name='路燈發光面';
+ return fixture;
+}
+
+function createGround(scene,anisotropy=1){
  const root=new THREE.Group(),gridRoot=new THREE.Group(),roadRoot=new THREE.Group();root.add(gridRoot,roadRoot);scene.add(root);
  const mat=(color,roughness=1)=>new THREE.MeshStandardMaterial({color,roughness});
- const asphalt=mat(0x30363a),grass=mat(0x6b8750),shoulder=mat(0x9b9c84),yellow=mat(0xe8bd44),white=mat(0xd6dcd4),gridMat=mat(0x35404a);
+ const grass=mat(0x6b8750),shoulder=mat(0x9b9c84),white=mat(0xd6dcd4),gridMat=mat(0x35404a);
  function plane(w,l,m,x,y,z,parent){const o=new THREE.Mesh(new THREE.PlaneGeometry(w,l),m);o.rotation.x=-Math.PI/2;o.position.set(x,y,z);o.receiveShadow=true;parent.add(o);return o;}
  plane(240,240,gridMat,0,-.004,0,gridRoot);const grid=new THREE.GridHelper(160,160,0x718190,0x566371);grid.position.y=.001;gridRoot.add(grid);
  const stations=wheelStations(),xs=stations.map(w=>w.x),center=(Math.min(...xs)+Math.max(...xs))/2,halfTrack=(Math.max(...xs)-Math.min(...xs))/2;
  const guides=new THREE.Group();gridRoot.add(guides);const referenceXs=[center-halfTrack-.27,center+halfTrack+.27];
  for(const x of referenceXs)for(let i=-25;i<=25;i++)plane(.035,.80,white,x,.004,i*1.6,guides);
  const laneWidth=3.5,roadCenter=laneWidth/2;
- plane(240,240,grass,0,-.006,0,roadRoot);plane(laneWidth*2+1.1,240,shoulder,roadCenter,-.001,0,roadRoot);plane(laneWidth*2,240,asphalt,roadCenter,.002,0,roadRoot);
- for(const x of [roadCenter-.08,roadCenter+.08])plane(.055,240,yellow,x,.006,0,roadRoot);
- for(const x of [roadCenter-laneWidth+.13,roadCenter+laneWidth-.13])plane(.075,240,white,x,.006,0,roadRoot);
- // Road texture, reflectors and roadside objects repeat only from SI distance.
+ const rightEdge=roadCenter-laneWidth,leftEdge=roadCenter+laneWidth,shoulderWidth=.55;
+ const rightShoulder=rightEdge-shoulderWidth,leftShoulder=leftEdge+shoulderWidth;
+ const paintMap=pavementMap(laneWidth*2,anisotropy);
+ const asphalt=new THREE.MeshStandardMaterial({map:paintMap,roughness:.94});
+ // Shared edges meet on one plane, including the grass and both shoulders.
+ function strip(name,minX,maxX,material){
+  const geometry=new THREE.PlaneGeometry(1,roadLength).rotateX(-Math.PI/2);
+  const positions=geometry.attributes.position;
+  for(let i=0;i<positions.count;i++){
+   positions.setX(i,positions.getX(i)<0?minX:maxX);
+   positions.setY(i,0);
+  }
+  const mesh=new THREE.Mesh(geometry,material);
+  mesh.name=name;
+  mesh.position.y=roadLevel;
+  mesh.receiveShadow=true;
+  roadRoot.add(mesh);
+ }
+ strip('右側草地',-120,rightShoulder,grass);
+ strip('右路肩',rightShoulder,rightEdge,shoulder);
+ strip('柏油路面與標線',rightEdge,leftEdge,asphalt);
+ strip('左路肩',leftEdge,leftShoulder,shoulder);
+ strip('左側草地',leftShoulder,120,grass);
+ // Road markings and roadside objects follow signed travel.
  const moving=new THREE.Group();roadRoot.add(moving);
  const dashMat=mat(0xa6b3a1),leaf=mat(0x365c38),trunk=mat(0x5a4d3c),hillMat=mat(0x849875);
  const repeat=96,roadMarks=[],trees=[];
@@ -7448,21 +7571,70 @@ function createGround(scene){
  }
  // Instanced grass patches avoid hundreds of extra draw calls on phones.
  const patches=new THREE.InstancedMesh(new THREE.PlaneGeometry(.7,.9).rotateX(-Math.PI/2),mat(0x78945b),240),dummy=new THREE.Object3D();moving.add(patches);
- const grassPoints=[];for(let i=0;i<240;i++){const side=i%2?1:-1,x=side>0?6+(i*3.173%30):-2.6-(i*4.213%30),z=(i*7.137)%96-48;grassPoints.push({x,z,angle:i*1.37});}
+ const grassPoints=[];for(let i=0;i<240;i++){const side=i%2?1:-1,x=side>0?leftShoulder+.65+(i*3.173%30):rightShoulder-.65-(i*4.213%30),z=(i*7.137)%96-48;grassPoints.push({x,z,angle:i*1.37});}
  for(let i=0;i<16;i++){
   const g=new THREE.Group(),x=i%2?7+(i*2.37%11):-5-(i*1.77%12),z=(i*13.71)%96-48;g.position.set(x,0,z);moving.add(g);
   const stem=new THREE.Mesh(new THREE.CylinderGeometry(.065,.09,1.4,6),trunk);stem.position.y=.7;g.add(stem);
   const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(1,1),leaf);crown.scale.set(.8,1.25,.8);crown.position.y=1.8;g.add(crown);trees.push({o:g,z});
  }
  for(let i=0;i<12;i++){const hill=new THREE.Mesh(new THREE.SphereGeometry(1,24,10),hillMat);hill.scale.set(12+i%3*5,3+i%4*1.2,16);hill.position.set(i%2?40:-40,-1,-100+i*18);roadRoot.add(hill);}
- const mod=(v,n)=>((v+n/2)%n+n)%n-n/2;
+ const lampX=leftEdge+.34;
+ const lens=new THREE.MeshStandardMaterial({
+  color:0xc9c6b7,roughness:.3,emissive:0xffc381,emissiveIntensity:0
+ });
+ const lampModel=createStreetLamp(lens),lampPosts=[];
+ for(let z=lampOrigin-roadLength/2;z<roadLength/2;z+=lampPitch){
+  const post=lampModel.clone();
+  post.position.set(lampX,roadLevel,z);
+  roadRoot.add(post);
+  lampPosts.push({o:post,z});
+ }
+ const lampLighting=new THREE.Group();
+ roadRoot.add(lampLighting);
+ // Three nearby fixtures cast warm light. The outer slot fades out before
+ // it is reassigned to a fixture on the other side of the car.
+ const beams=Array.from({length:3},()=>{
+  const beam=new THREE.SpotLight(0xffcc95,0,25,.72,.72,2);
+  beam.name='路燈照明';
+  lampLighting.add(beam,beam.target);
+  return beam;
+ });
  let mode='grassland';
- return {root,gridRoot,roadRoot,grid,guides,referenceXs,laneWidth,roadCenter,roadMarks,trees,
-  setMode(value){mode=value==='grid'?'grid':'grassland';gridRoot.visible=mode==='grid';roadRoot.visible=mode==='grassland';scene.background=new THREE.Color(mode==='grid'?0x4d5d6c:0xb6cad2);scene.fog=new THREE.FogExp2(scene.background,mode==='grid'?.013:.015);},
-  update(s,e){root.visible=e===0;grid.position.z=-mod(s.distance,1);guides.position.z=-mod(s.distance,1.6);
-   for(const p of [...roadMarks,...trees])p.o.position.z=mod(p.z-s.distance,repeat);
-   for(let i=0;i<grassPoints.length;i++){const p=grassPoints[i];dummy.position.set(p.x,.002,mod(p.z-s.distance,repeat));dummy.rotation.y=p.angle;dummy.updateMatrix();patches.setMatrixAt(i,dummy.matrix);}patches.instanceMatrix.needsUpdate=true;
-  },signature(){return [grid.position.z,guides.position.z,...roadMarks.map(p=>p.o.position.z),...trees.map(p=>p.o.position.z)];}
+ function setMode(value){
+  mode=value==='grid'||value==='night-road'?value:'grassland';
+  const night=mode==='night-road',gridMode=mode==='grid';
+  gridRoot.visible=gridMode;roadRoot.visible=!gridMode;
+  lens.emissiveIntensity=night?2.35:0;
+  lampLighting.visible=night;
+  scene.background=new THREE.Color(gridMode?0x4d5d6c:night?0x111d31:0xb6cad2);
+  scene.fog=new THREE.FogExp2(scene.background,gridMode?.013:night?.023:.015);
+ }
+ function update(s,e){
+  const distance=s.distance;
+  root.visible=e===0;
+  grid.position.z=-wrapCentered(distance,1);guides.position.z=-wrapCentered(distance,1.6);
+  // A smaller world Z reaches the same stripe as travel advances.
+  paintMap.offset.y=THREE.MathUtils.euclideanModulo(.5-(roadLength/2+distance)/dashPitch,1);
+  for(const p of [...roadMarks,...trees])p.o.position.z=wrapCentered(p.z-distance,repeat);
+  for(const p of lampPosts)p.o.position.z=wrapCentered(p.z-distance,roadLength);
+  const nearest=wrapCentered(lampOrigin-distance,lampPitch);
+  for(let i=0;i<beams.length;i++){
+   const beam=beams[i],z=nearest+(i-1)*lampPitch;
+   beam.position.set(lampX+lampHeadX,lampHeadY+roadLevel-.012,z);
+   beam.target.position.set(1.95,roadLevel,z);
+   beam.intensity=215*(1-THREE.MathUtils.smoothstep(Math.abs(z),37,57));
+  }
+  for(let i=0;i<grassPoints.length;i++){
+   const p=grassPoints[i];
+   dummy.position.set(p.x,roadLevel+.008,wrapCentered(p.z-distance,repeat));
+   dummy.rotation.y=p.angle;dummy.updateMatrix();patches.setMatrixAt(i,dummy.matrix);
+  }
+  patches.instanceMatrix.needsUpdate=true;
+ }
+ setMode(mode);
+ return {root,gridRoot,roadRoot,grid,guides,referenceXs,laneWidth,roadCenter,roadMarks,trees,setMode,update,
+  get night(){return mode==='night-road';},
+  signature(){return [grid.position.z,guides.position.z,paintMap.offset.y,...roadMarks.map(p=>p.o.position.z),...trees.map(p=>p.o.position.z),...lampPosts.map(p=>p.o.position.z)];}
  };
 }
 
@@ -7649,7 +7821,24 @@ function startDriveline(root){
  const viewport=$('scene'),renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.32;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;viewport.appendChild(renderer.domElement);renderer.domElement.setAttribute('aria-label','3D 後置後驅跑車、原作 V8、離合器與六速手排');
  const camera=new THREE.PerspectiveCamera(36,1,.015,250);const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.075;controls.minDistance=.12;controls.maxDistance=100;controls.maxPolarAngle=Math.PI*.48;
  const environment=new RoomEnvironment(),pmrem=new THREE.PMREMGenerator(renderer);scene.environment=pmrem.fromScene(environment,.04).texture;scene.environmentIntensity=1.05;environment.dispose();pmrem.dispose();
- scene.add(new THREE.HemisphereLight(0xcde7f6,0x263343,2));const key=new THREE.DirectionalLight(0xffecd4,3.8);key.position.set(-5,12,6);key.castShadow=true;key.shadow.mapSize.set(1024,1024);key.shadow.camera.left=-12;key.shadow.camera.right=12;key.shadow.camera.top=10;key.shadow.camera.bottom=-10;key.shadow.bias=-.001;scene.add(key);const fill=new THREE.DirectionalLight(0x8cc8ed,2.1);fill.position.set(7,5,-5);scene.add(fill);const rim=new THREE.DirectionalLight(0xd4e8ff,1.2);rim.position.set(2,4,10);scene.add(rim);
+ const skyLight=new THREE.HemisphereLight(0xcde7f6,0x263343,2);
+ const key=new THREE.DirectionalLight(0xffecd4,3.8);
+ key.position.set(-5,12,6);key.castShadow=true;key.shadow.mapSize.set(1024,1024);
+ key.shadow.camera.left=-12;key.shadow.camera.right=12;key.shadow.camera.top=10;key.shadow.camera.bottom=-10;key.shadow.bias=-.001;
+ const fill=new THREE.DirectionalLight(0x8cc8ed,2.1);fill.position.set(7,5,-5);
+ const rim=new THREE.DirectionalLight(0xd4e8ff,1.2);rim.position.set(2,4,10);
+ scene.add(skyLight,key,fill,rim);
+ let nightLighting=false;
+ function setRoadLighting(night){
+  if(night===nightLighting)return;
+  nightLighting=night;
+  scene.environmentIntensity=night?.26:1.05;
+  skyLight.intensity=night?.46:2;
+  key.color.setHex(night?0x9fb9f3:0xffecd4);
+  key.intensity=night?.36:3.8;
+  fill.intensity=night?.25:2.1;
+  rim.intensity=night?.58:1.2;
+ }
  const {engine,trans,link,powerRoot,vehicle}=mountDriveline(scene);
  const paintStorageKey='driveline-r8-paint-v1';
  function choosePaint(id,save=false){
@@ -7661,7 +7850,7 @@ function startDriveline(root){
  let savedPaint='blue';try{savedPaint=storage?.getItem(paintStorageKey)||'blue';}catch{}
  choosePaint(PAINTS.some(p=>p.id===savedPaint)?savedPaint:'blue');
  $$('[data-paint]').forEach(b=>b.onclick=()=>choosePaint(b.dataset.paint,true));
- const ground=createGround(scene);ground.setMode('grassland');
+ const ground=createGround(scene,Math.min(8,renderer.capabilities?.getMaxAnisotropy()||1));
  const engineSettings={cylinder:1,cutaway:false,turboCutaway:false,airflow:'particles',headOpacity:.16,turboOpacity:.22,pipeOpacity:.32,quality:'high'};
  const powerPoint=(x,y,z)=>powerRoot.localToWorld(new THREE.Vector3(x,y,z));
  const presets={rearaxle:{pos:new THREE.Vector3(1.9,1.05,-3.4),target:new THREE.Vector3(0,.35,-1.22)},frontsuspension:{pos:new THREE.Vector3(1.8,.95,3.2),target:new THREE.Vector3(0,.33,1.40)},frontaxle:{pos:new THREE.Vector3(.55,.67,3.75),target:new THREE.Vector3(0,.33,1.40)},overview:{pos:new THREE.Vector3(5,3.2,6.8),target:new THREE.Vector3(0,.62,0)},clutch:{pos:powerPoint(-.8,3.0,3.0),target:powerPoint(-1.8,1.9,0)},final:{pos:powerPoint(5.8,3.5,5),target:powerPoint(2.6,1.2,1.2)},exhaust:{pos:new THREE.Vector3(2.7,1.4,-4.4),target:new THREE.Vector3(0,.35,-1.65)}};
@@ -7705,7 +7894,15 @@ function startDriveline(root){
  let freezeSnapshot=null,lastRestoration=null;
  const stateSignature=()=>JSON.stringify(sim.s);
  const modelSignature=()=>[...engine.signature(),...trans.signature(),...link.signature(),...vehicle.signature(),...ground.signature()];
- function syncModels(){const opaque=['full','bodyglass'].includes(view.mode);engine.update(sim.s,view.e,view.op[0],opaque?{...engineSettings,cutaway:false,turboCutaway:false,headOpacity:1,turboOpacity:1,pipeOpacity:1,airflow:'off'}:engineSettings);trans.update(sim.s,view.e,view.op[2],view.op[1]);link.update(sim.s,view.e,opaque?1:.14,view.op[1]);vehicle.update(sim.s,view.e,view.mode,$('front-hub-inspection').checked);ground.update(sim.s,view.e);}
+ function syncModels(){
+  const opaque=['full','bodyglass'].includes(view.mode),night=ground.night&&!frozen();
+  setRoadLighting(night);
+  engine.update(sim.s,view.e,view.op[0],opaque?{...engineSettings,cutaway:false,turboCutaway:false,headOpacity:1,turboOpacity:1,pipeOpacity:1,airflow:'off'}:engineSettings);
+  trans.update(sim.s,view.e,view.op[2],view.op[1]);
+  link.update(sim.s,view.e,opaque?1:.14,view.op[1]);
+  vehicle.update(sim.s,view.e,view.mode,$('front-hub-inspection').checked,night);
+  ground.update(sim.s,view.e);
+ }
  function setMode(mode){if(mode==='exploded'&&!frozen()){race.practice('拆解觀察');syncModels();freezeSnapshot={physics:stateSignature(),models:modelSignature()};lastRestoration=null;}view.mode=mode;$('mobile-view-mode').value=mode;view.targetE=mode==='exploded'?1:0;view.targetOp=['full','bodyglass'].includes(mode)?[1,1,1]:mode==='exploded'?[.50,.4,.40]:['engine-opacity','clutch-opacity','trans-opacity'].map(id=>Number($(id).value)/100);$$('[data-mode]').forEach(b=>b.classList.toggle('selected',b.dataset.mode===mode));if(mode==='exploded'){touch?.releaseAll();cameraTo('overview');}}
  $('mobile-view-mode').onchange=()=>setMode($('mobile-view-mode').value);
  $$('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));$$('[data-camera]').forEach(b=>b.onclick=()=>{cameraTo(b.dataset.camera);dismissPauseNotice();if(mobile)setCameraMenu(false,true);});
